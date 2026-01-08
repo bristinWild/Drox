@@ -18,8 +18,13 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { router } from "expo-router";
+import { sendOtp, verifyOtp } from "@/api/auth";
+import { saveToken } from "@/constants/auth";
 
 WebBrowser.maybeCompleteAuthSession();
+
+
+
 
 
 
@@ -28,6 +33,61 @@ export default function AuthScreen() {
     const [countryCode, setCountryCode] = useState<CountryCode>("US");
     const [callingCode, setCallingCode] = useState("1");
     const [phone, setPhone] = useState("");
+    const [step, setStep] = useState<"PHONE" | "OTP">("PHONE");
+    const [otp, setOtp] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [cooldown, setCooldown] = useState(0);
+
+    const handleSendOtp = async () => {
+        try {
+            setLoading(true);
+            setError("");
+
+            const fullPhone = `+${callingCode}${phone}`;
+            await sendOtp(fullPhone);
+
+            setStep("OTP");
+            setCooldown(60);
+        } catch (e) {
+            setError("Failed to send OTP");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+    const handleVerifyOtp = async () => {
+        try {
+            setLoading(true);
+            setError("");
+
+            const fullPhone = `+${callingCode}${phone}`;
+            const res = await verifyOtp(fullPhone, otp);
+
+            await saveToken(res.token);
+
+            // User profile available as res.user
+            console.log("User:", res.user);
+
+            router.replace("/(tabs)");
+        } catch (e) {
+            setError("Invalid or expired OTP");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!cooldown) return;
+
+        const timer = setInterval(() => {
+            setCooldown((c) => (c > 0 ? c - 1 : 0));
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [cooldown]);
+
 
 
     const [request, response, promptAsync] = Google.useAuthRequest({
@@ -43,6 +103,10 @@ export default function AuthScreen() {
             // Send accessToken to backend
         }
     }, [response]);
+
+
+
+
 
 
     return (
@@ -92,10 +156,64 @@ export default function AuthScreen() {
             </View>
 
 
-            {/* CTA */}
-            <TouchableOpacity style={styles.smsButton}>
-                <Text style={styles.smsText}>SEND CODE VIA SMS</Text>
-            </TouchableOpacity>
+            {/* OTP INPUT */}
+            {step === "OTP" && (
+                <>
+                    <TextInput
+                        placeholder="Enter 6-digit OTP"
+                        placeholderTextColor="#6B7280"
+                        keyboardType="number-pad"
+                        value={otp}
+                        onChangeText={setOtp}
+                        maxLength={6}
+                        autoFocus
+                        textContentType="oneTimeCode"
+                        autoComplete="sms-otp"
+                        style={styles.phoneInput}
+                    />
+
+                    <TouchableOpacity
+                        style={styles.smsButton}
+                        onPress={handleVerifyOtp}
+                        disabled={loading}
+                    >
+                        <Text style={styles.smsText}>
+                            {loading ? "VERIFYING..." : "VERIFY OTP"}
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        disabled={cooldown > 0}
+                        onPress={handleSendOtp}
+                    >
+                        <Text style={{ color: "#22D3EE", textAlign: "center" }}>
+                            {cooldown > 0
+                                ? `Resend in ${cooldown}s`
+                                : "Resend OTP"}
+                        </Text>
+                    </TouchableOpacity>
+                </>
+            )}
+
+            {/* SEND OTP BUTTON */}
+            {step === "PHONE" && (
+                <TouchableOpacity
+                    style={styles.smsButton}
+                    onPress={handleSendOtp}
+                    disabled={loading}
+                >
+                    <Text style={styles.smsText}>
+                        {loading ? "SENDING..." : "SEND CODE VIA SMS"}
+                    </Text>
+                </TouchableOpacity>
+            )}
+
+            {/* ERROR */}
+            {error ? (
+                <Text style={{ color: "#F87171", marginBottom: 10 }}>
+                    {error}
+                </Text>
+            ) : null}
 
             {/* Divider */}
             <View style={styles.dividerRow}>
@@ -103,7 +221,6 @@ export default function AuthScreen() {
                 <Text style={styles.orText}>OR</Text>
                 <View style={styles.divider} />
             </View>
-
             {/* Apple Login */}
             {Platform.OS === "ios" && (
                 <AppleAuthentication.AppleAuthenticationButton
@@ -279,3 +396,5 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
 });
+
+
