@@ -27,5 +27,21 @@ export async function verifyOtp(phone: string, otp: string) {
         throw new Error("Invalid OTP");
     }
 
-    return res.json();
+    return res.json(); // { accessToken, refreshToken, user }
 }
+
+export async function refreshToken(refreshToken: string) {
+    const res = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!res.ok) {
+        throw new Error("Refresh failed");
+    }
+
+    return res.json(); // { accessToken, refreshToken }
+}
+
+

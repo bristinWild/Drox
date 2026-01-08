@@ -13,13 +13,15 @@ import CountryPicker, {
     Country,
     CountryCode,
 } from "react-native-country-picker-modal";
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { router } from "expo-router";
 import { sendOtp, verifyOtp } from "@/api/auth";
-import { saveToken } from "@/constants/auth";
+import { saveTokens } from "@/constants/auth";
+import { useAuth } from "@/hooks/useAuth";
+
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -38,6 +40,8 @@ export default function AuthScreen() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [cooldown, setCooldown] = useState(0);
+
+    const { login } = useAuth();
 
     const handleSendOtp = async () => {
         try {
@@ -65,9 +69,8 @@ export default function AuthScreen() {
             const fullPhone = `+${callingCode}${phone}`;
             const res = await verifyOtp(fullPhone, otp);
 
-            await saveToken(res.token);
+            await login(res.accessToken, res.refreshToken);
 
-            // User profile available as res.user
             console.log("User:", res.user);
 
             router.replace("/(tabs)");
@@ -103,6 +106,7 @@ export default function AuthScreen() {
             // Send accessToken to backend
         }
     }, [response]);
+
 
 
 
