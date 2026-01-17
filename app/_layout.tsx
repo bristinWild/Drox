@@ -6,12 +6,13 @@ import { AuthProvider } from "@/hooks/useAuth";
 
 export default function RootLayout() {
     return (
-
-        <AuthProvider>
-            <SafeAreaProvider>
-                <Stack screenOptions={{ headerShown: false }} />
-            </SafeAreaProvider>
-        </AuthProvider>
-
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <AuthProvider>
+                <SafeAreaProvider>
+                    <Stack screenOptions={{ headerShown: false }} />
+                </SafeAreaProvider>
+            </AuthProvider>
+        </GestureHandlerRootView>
     );
+
 }

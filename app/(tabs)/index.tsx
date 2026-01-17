@@ -16,9 +16,22 @@ import * as Location from "expo-location";
 import { useEffect, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ActivityCard from "@/components/activity-card";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
+import { interpolate, Extrapolation } from "react-native-reanimated";
+import { Extrapolate } from "react-native-reanimated";
+
+
+
+const SHEET_MAX_HEIGHT = 520;
+const SHEET_MIN_HEIGHT = 260;
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
+  const translateY = useSharedValue(0);
+  const startY = useSharedValue(0);
+
+
 
   const [location, setLocation] =
     useState<Location.LocationObject | null>(null);
@@ -38,8 +51,48 @@ export default function ExploreScreen() {
     })();
   }, []);
 
+  const panGesture = Gesture.Pan().activeOffsetY([-10, 10])
+    .onBegin(() => {
+      startY.value = translateY.value;
+    })
+    .onUpdate((e) => {
+      const nextY = startY.value + e.translationY;
+
+      translateY.value = Math.max(
+        -SHEET_MAX_HEIGHT + SHEET_MIN_HEIGHT,
+        Math.min(nextY, 0)
+      );
+
+    })
+    .onEnd((e) => {
+      if (e.velocityY < -500 || translateY.value < -SHEET_MAX_HEIGHT / 2) {
+        translateY.value = withSpring(
+          -SHEET_MAX_HEIGHT + SHEET_MIN_HEIGHT
+        );
+      } else {
+        translateY.value = withSpring(0);
+      }
+    });
+
+
+  const sheetStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  const overlayStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(
+      translateY.value,
+      [-SHEET_MAX_HEIGHT + SHEET_MIN_HEIGHT, 0],
+      [0.6, 0],
+      Extrapolation.CLAMP
+    ),
+  }));
+
+
+
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+    <LinearGradient colors={["#0B0F14", "#121826"]} style={styles.container}>
+      {/* <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}> */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -49,30 +102,35 @@ export default function ExploreScreen() {
           style={styles.container}
         >
           {/* MAP */}
-          {location && (
-            <MapView
-              style={StyleSheet.absoluteFill}
-              initialRegion={{
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-                latitudeDelta: 0.08,
-                longitudeDelta: 0.08,
-              }}
-              showsUserLocation
-              showsMyLocationButton={false}
-              pitchEnabled={false}
-              rotateEnabled={false}
-              showsPointsOfInterest={false}
-              showsBuildings={false}
-              toolbarEnabled={false}
-              mapPadding={{
-                top: insets.top + 80,
-                bottom: 320,
-                left: 40,
-                right: 40,
-              }}
-            />
-          )}
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={StyleSheet.absoluteFill}>
+              {location && (
+                <MapView
+                  style={StyleSheet.absoluteFill}
+                  initialRegion={{
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude,
+                    latitudeDelta: 0.08,
+                    longitudeDelta: 0.08,
+                  }}
+                  showsUserLocation
+                  showsMyLocationButton={false}
+                  pitchEnabled={false}
+                  rotateEnabled={false}
+                  showsPointsOfInterest={false}
+                  showsBuildings={false}
+                  toolbarEnabled={false}
+                  mapPadding={{
+                    top: insets.top + 80,
+                    bottom: SHEET_MIN_HEIGHT,
+                    left: 40,
+                    right: 40,
+                  }}
+                />
+              )}
+            </View>
+          </TouchableWithoutFeedback>
+
 
           {/* MAP DARK OVERLAY */}
           <View pointerEvents="none" style={styles.mapOverlay} />
@@ -95,29 +153,36 @@ export default function ExploreScreen() {
           )}
 
           {/* BOTTOM PANEL */}
-          <View
-            style={[
-              styles.bottomPanel,
-              { paddingBottom: insets.bottom + 16 },
-            ]}
-          >
-            <TextInput
-              placeholder="Where to chill?"
-              placeholderTextColor="#6B7280"
-              style={styles.search}
-            />
+          <GestureDetector gesture={panGesture}>
+            <Animated.View
+              style={[
+                styles.bottomPanel,
+                sheetStyle,
+                { paddingBottom: insets.bottom + 16 },
+              ]}
+            >
+              <View style={styles.dragHandle} />
 
-            {/* ACTIVITY LIST */}
-            <View style={styles.activityList}>
-              {ACTIVITIES.map((item) => (
-                <ActivityCard key={item.id} item={item} />
-              ))}
-            </View>
-          </View>
+              <TextInput
+                placeholder="Where to chill?"
+                placeholderTextColor="#6B7280"
+                style={styles.search}
+              />
+
+              <View style={styles.activityList}>
+                {ACTIVITIES.map((item) => (
+                  <ActivityCard key={item.id} item={item} />
+                ))}
+              </View>
+            </Animated.View>
+          </GestureDetector>
+
+
 
         </LinearGradient>
       </KeyboardAvoidingView>
-    </TouchableWithoutFeedback>
+      {/* </TouchableWithoutFeedback> */}
+    </LinearGradient>
   );
 }
 
@@ -148,9 +213,10 @@ const styles = StyleSheet.create({
   },
   bottomPanel: {
     position: "absolute",
-    bottom: 0,
+    bottom: -SHEET_MAX_HEIGHT + SHEET_MIN_HEIGHT, // 👈 KEY
     left: 0,
     right: 0,
+    height: SHEET_MAX_HEIGHT, // 👈 KEY
     paddingHorizontal: 20,
     paddingTop: 18,
     backgroundColor: "rgba(11,15,20,0.97)",
@@ -160,6 +226,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 30,
   },
+
   logo: {
     color: "#22D3EE",
     fontSize: 18,
@@ -222,6 +289,17 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(10,15,25,0.35)",
   },
+
+  dragHandle: {
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "#374151",
+    alignSelf: "center",
+    marginBottom: 12,
+  },
+
+
 });
 
 
