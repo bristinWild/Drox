@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   ActivityIndicator,
+  Image
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import MapView from "react-native-maps";
@@ -19,7 +20,9 @@ import ActivityCard from "@/components/activity-card";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { interpolate, Extrapolation } from "react-native-reanimated";
-import { Extrapolate } from "react-native-reanimated";
+import { router } from "expo-router";
+import ActivityJoinModal from "@/components/activity-join-modal";
+
 
 
 
@@ -33,9 +36,11 @@ export default function ExploreScreen() {
 
 
 
-  const [location, setLocation] =
-    useState<Location.LocationObject | null>(null);
+  const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(true);
+  const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
+  const isJoinOpen = selectedActivity !== null;
+
 
   useEffect(() => {
     (async () => {
@@ -138,8 +143,12 @@ export default function ExploreScreen() {
           {/* HEADER */}
           <View style={[styles.header, { top: insets.top + 12 }]}>
             <Text style={styles.logo}>DROX</Text>
-            <TouchableOpacity style={styles.profileCircle}>
-              <Text style={styles.profileInitial}>D</Text>
+            <TouchableOpacity style={styles.profileCircle}
+              onPress={() => router.push("/profile")}>
+              <Image
+                source={require('@/assets/images/cat-icon.png')}
+                style={styles.profileImage}
+              />
             </TouchableOpacity>
           </View>
 
@@ -153,35 +162,56 @@ export default function ExploreScreen() {
           )}
 
           {/* BOTTOM PANEL */}
-          <GestureDetector gesture={panGesture}>
-            <Animated.View
-              style={[
-                styles.bottomPanel,
-                sheetStyle,
-                { paddingBottom: insets.bottom + 16 },
-              ]}
-            >
-              <View style={styles.dragHandle} />
+          {!isJoinOpen && (
+            <GestureDetector gesture={panGesture}>
+              <Animated.View
+                style={[
+                  styles.bottomPanel,
+                  sheetStyle,
+                  { paddingBottom: insets.bottom + 16 },
+                ]}
+              >
+                <View style={styles.dragHandle} />
 
-              <TextInput
-                placeholder="Where to chill?"
-                placeholderTextColor="#6B7280"
-                style={styles.search}
-              />
+                <TextInput
+                  placeholder="Where to chill?"
+                  placeholderTextColor="#6B7280"
+                  style={styles.search}
+                />
 
-              <View style={styles.activityList}>
-                {ACTIVITIES.map((item) => (
-                  <ActivityCard key={item.id} item={item} />
-                ))}
-              </View>
-            </Animated.View>
-          </GestureDetector>
+                <View style={styles.activityList}>
+                  {ACTIVITIES.map((item) => (
+                    <ActivityCard
+                      key={item.id}
+                      item={item}
+                      onJoin={() => {
+                        setSelectedActivity(item);
+                      }}
+                    />
+                  ))}
+                </View>
+              </Animated.View>
+            </GestureDetector>
+          )}
+
+
 
 
 
         </LinearGradient>
       </KeyboardAvoidingView>
+      {selectedActivity && (
+        <ActivityJoinModal
+          activity={selectedActivity}
+          onClose={() => {
+            setSelectedActivity(null);
+            translateY.value = withSpring(0); // reopen explore sheet
+          }}
+        />
+      )}
+
       {/* </TouchableWithoutFeedback> */}
+
     </LinearGradient>
   );
 }
@@ -241,10 +271,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  profileInitial: {
-    color: "#22D3EE",
-    fontWeight: "700",
+
+  profileImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
   },
+
   search: {
     borderWidth: 1,
     borderColor: "#22D3EE",
@@ -311,7 +344,14 @@ const ACTIVITIES = [
     distance: "5 km away",
     people: 6,
     time: "Starts 4:30 pm",
+    description: "Early morning trek with fellow solo travelers. Moderate difficulty.",
+    image: require("@/assets/images/hiking.png"),
+    joiningFee: "₹299",
+    online: 8,
+    male: 5,
+    female: 3,
   },
+
   {
     id: "2",
     title: "Chill Cafes",
@@ -319,7 +359,14 @@ const ACTIVITIES = [
     distance: "2 km away",
     people: 3,
     time: "Open now",
+    description: "Cafe hopping, conversations, and meeting like-minded travelers.",
+    image: require("@/assets/images/cafe.png"),
+    joiningFee: "Free",
+    online: 4,
+    male: 2,
+    female: 2,
   },
+
   {
     id: "3",
     title: "Bar Hopping",
@@ -327,6 +374,12 @@ const ACTIVITIES = [
     distance: "3 km away",
     people: 5,
     time: "Tonight 8 pm",
+    description: "Explore the city nightlife with a friendly group.",
+    image: require("@/assets/images/beer-mug.png"),
+    joiningFee: "₹499",
+    online: 6,
+    male: 4,
+    female: 2,
   },
 ];
 

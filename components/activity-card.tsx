@@ -1,9 +1,10 @@
 import { TouchableOpacity, View, Text } from "react-native";
 import { StyleSheet } from "react-native";
 
-export default function ActivityCard({ item }: any) {
+export default function ActivityCard({ item, onJoin }: any) {
     return (
-        <TouchableOpacity style={styles.activityCard}>
+
+        <View style={styles.activityCard}>
             <View>
                 <Text style={styles.activityTitle}>{item.title}</Text>
                 <Text style={styles.activityMeta}>
@@ -12,10 +13,12 @@ export default function ActivityCard({ item }: any) {
                 <Text style={styles.activityTime}>{item.time}</Text>
             </View>
 
-            <View style={styles.joinButton}>
+            <TouchableOpacity style={styles.joinButton} onPress={onJoin}>
                 <Text style={styles.joinText}>JOIN</Text>
-            </View>
-        </TouchableOpacity>
+            </TouchableOpacity>
+        </View>
+
+
     );
 }
 
