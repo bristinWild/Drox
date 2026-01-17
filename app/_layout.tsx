@@ -1,33 +1,17 @@
-import { Stack, router } from "expo-router";
-import { useEffect, useState } from "react";
-import { View, ActivityIndicator } from "react-native";
-import { Slot } from "expo-router";
+import "react-native-gesture-handler";
+import { Stack } from "expo-router";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "@/hooks/useAuth";
-import { getAccessToken as getToken } from "@/constants/auth";
-
 
 export default function RootLayout() {
-    // const [checkingAuth, setCheckingAuth] = useState(true);
-
-    // useEffect(() => {
-    //     async function bootstrap() {
-    //         const token = await getToken();
-
-    //         if (token) {
-    //             router.replace("/(tabs)");
-    //         } else {
-    //             router.replace("/auth");
-    //         }
-
-    //         setCheckingAuth(false);
-    //     }
-
-    //     bootstrap();
-    // }, []);
     return (
+
         <AuthProvider>
-            <Stack screenOptions={{ headerShown: false }} />
+            <SafeAreaProvider>
+                <Stack screenOptions={{ headerShown: false }} />
+            </SafeAreaProvider>
         </AuthProvider>
+
     );
 }
-

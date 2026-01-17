@@ -1,115 +1,255 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet, Text } from 'react-native';
-import { useState, useEffect } from 'react';
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
-import { useUserApi } from '@/api/user';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  Platform,
+  Keyboard,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  ActivityIndicator,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import MapView from "react-native-maps";
+import * as Location from "expo-location";
+import { useEffect, useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import ActivityCard from "@/components/activity-card";
 
-export default function HomeScreen() {
+export default function ExploreScreen() {
+  const insets = useSafeAreaInsets();
 
-  const { getMe } = useUserApi();
-  const [user, setUser] = useState<any>(null);
+  const [location, setLocation] =
+    useState<Location.LocationObject | null>(null);
+  const [loadingLocation, setLoadingLocation] = useState(true);
 
   useEffect(() => {
-    getMe()
-      .then(setUser)
-      .catch((err) => {
-        console.error("Failed to fetch user", err);
-      });
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setLoadingLocation(false);
+        return;
+      }
+
+      const loc = await Location.getCurrentPositionAsync({});
+      setLocation(loc);
+      setLoadingLocation(false);
+    })();
   }, []);
 
-  if (!user) {
-    return <Text style={{ color: "white" }}>Loading...</Text>;
-  }
-
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Fuck it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/(tabs)/explore">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <LinearGradient
+          colors={["#0B0F14", "#121826"]}
+          style={styles.container}
+        >
+          {/* MAP */}
+          {location && (
+            <MapView
+              style={StyleSheet.absoluteFill}
+              initialRegion={{
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                latitudeDelta: 0.08,
+                longitudeDelta: 0.08,
+              }}
+              showsUserLocation
+              showsMyLocationButton={false}
+              pitchEnabled={false}
+              rotateEnabled={false}
+              showsPointsOfInterest={false}
+              showsBuildings={false}
+              toolbarEnabled={false}
+              mapPadding={{
+                top: insets.top + 80,
+                bottom: 320,
+                left: 40,
+                right: 40,
+              }}
             />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+          )}
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+          {/* MAP DARK OVERLAY */}
+          <View pointerEvents="none" style={styles.mapOverlay} />
+
+          {/* HEADER */}
+          <View style={[styles.header, { top: insets.top + 12 }]}>
+            <Text style={styles.logo}>DROX</Text>
+            <TouchableOpacity style={styles.profileCircle}>
+              <Text style={styles.profileInitial}>D</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* LOADER */}
+          {loadingLocation && (
+            <ActivityIndicator
+              size="large"
+              color="#22D3EE"
+              style={{ marginTop: 120 }}
+            />
+          )}
+
+          {/* BOTTOM PANEL */}
+          <View
+            style={[
+              styles.bottomPanel,
+              { paddingBottom: insets.bottom + 16 },
+            ]}
+          >
+            <TextInput
+              placeholder="Where to chill?"
+              placeholderTextColor="#6B7280"
+              style={styles.search}
+            />
+
+            {/* ACTIVITY LIST */}
+            <View style={styles.activityList}>
+              {ACTIVITIES.map((item) => (
+                <ActivityCard key={item.id} item={item} />
+              ))}
+            </View>
+          </View>
+
+        </LinearGradient>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
+  );
+}
+
+function Category({ label }: { label: string }) {
+  return (
+    <View style={styles.category}>
+      <Text style={styles.categoryText}>{label}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+
+  activityList: {
+    gap: 12,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
+  header: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    zIndex: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  bottomPanel: {
+    position: "absolute",
     bottom: 0,
     left: 0,
-    position: 'absolute',
+    right: 0,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    backgroundColor: "rgba(11,15,20,0.97)",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    shadowColor: "#000",
+    shadowOpacity: 0.5,
+    shadowRadius: 30,
+  },
+  logo: {
+    color: "#22D3EE",
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  profileCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#22D3EE",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  profileInitial: {
+    color: "#22D3EE",
+    fontWeight: "700",
+  },
+  search: {
+    borderWidth: 1,
+    borderColor: "#22D3EE",
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    color: "#FFFFFF",
+    fontSize: 15,
+    marginBottom: 18,
+  },
+  categories: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 22,
+  },
+  category: {
+    flex: 1,
+    marginHorizontal: 4,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#22D3EE",
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  categoryText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+  },
+  cta: {
+    backgroundColor: "#2563EB",
+    paddingVertical: 18,
+    borderRadius: 18,
+    alignItems: "center",
+  },
+  ctaText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  mapOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(10,15,25,0.35)",
   },
 });
+
+
+const ACTIVITIES = [
+  {
+    id: "1",
+    title: "Mountain Trek",
+    tag: "Outdoor",
+    distance: "5 km away",
+    people: 6,
+    time: "Starts 4:30 pm",
+  },
+  {
+    id: "2",
+    title: "Chill Cafes",
+    tag: "Cafe",
+    distance: "2 km away",
+    people: 3,
+    time: "Open now",
+  },
+  {
+    id: "3",
+    title: "Bar Hopping",
+    tag: "Nightlife",
+    distance: "3 km away",
+    people: 5,
+    time: "Tonight 8 pm",
+  },
+];
+
+

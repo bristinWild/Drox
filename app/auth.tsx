@@ -6,6 +6,9 @@ import {
     TextInput,
     Image,
     Platform,
+    Keyboard,
+    KeyboardAvoidingView,
+    TouchableWithoutFeedback,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
@@ -73,7 +76,7 @@ export default function AuthScreen() {
 
             console.log("User:", res.user);
 
-            router.replace("/(tabs)");
+            router.replace("/onboarding");
         } catch (e) {
             setError("Invalid or expired OTP");
         } finally {
@@ -114,156 +117,163 @@ export default function AuthScreen() {
 
 
     return (
-        <LinearGradient
-            colors={["#0B0F14", "#121826"]}
-            style={styles.container}
-        >
-            <StatusBar style="light" />
-
-            {/* Back Button */}
-            <TouchableOpacity onPress={() => router.push("/index")} style={styles.backButton}>
-                <Text style={styles.backArrow}>←</Text>
-            </TouchableOpacity>
-
-            {/* Title */}
-            <Text style={styles.title}>Join the Grid.</Text>
-            <Text style={styles.subtitle}>
-                Enter your mobile number to verify your account.
-                We hate spam too.
-            </Text>
-
-            {/* Phone Input */}
-            <View style={styles.phoneContainer}>
-                <TouchableOpacity style={styles.countryBox}>
-                    <CountryPicker
-                        countryCode={countryCode}
-                        withFilter
-                        withFlag
-                        withCallingCode
-                        withEmoji
-                        onSelect={(country: Country) => {
-                            setCountryCode(country.cca2);
-                            setCallingCode(country.callingCode[0]);
-                        }}
-                    />
-                    <Text style={styles.code}>+{callingCode}</Text>
-                </TouchableOpacity>
-
-                <TextInput
-                    placeholder="Phone number"
-                    placeholderTextColor="#6B7280"
-                    keyboardType="phone-pad"
-                    value={phone}
-                    onChangeText={setPhone}
-                    style={styles.phoneInput}
-                />
-            </View>
-
-
-            {/* OTP INPUT */}
-            {step === "OTP" && (
-                <>
-                    <TextInput
-                        placeholder="Enter 6-digit OTP"
-                        placeholderTextColor="#6B7280"
-                        keyboardType="number-pad"
-                        value={otp}
-                        onChangeText={setOtp}
-                        maxLength={6}
-                        autoFocus
-                        textContentType="oneTimeCode"
-                        autoComplete="sms-otp"
-                        style={styles.phoneInput}
-                    />
-
-                    <TouchableOpacity
-                        style={styles.smsButton}
-                        onPress={handleVerifyOtp}
-                        disabled={loading}
-                    >
-                        <Text style={styles.smsText}>
-                            {loading ? "VERIFYING..." : "VERIFY OTP"}
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        disabled={cooldown > 0}
-                        onPress={handleSendOtp}
-                    >
-                        <Text style={{ color: "#22D3EE", textAlign: "center" }}>
-                            {cooldown > 0
-                                ? `Resend in ${cooldown}s`
-                                : "Resend OTP"}
-                        </Text>
-                    </TouchableOpacity>
-                </>
-            )}
-
-            {/* SEND OTP BUTTON */}
-            {step === "PHONE" && (
-                <TouchableOpacity
-                    style={styles.smsButton}
-                    onPress={handleSendOtp}
-                    disabled={loading}
-                >
-                    <Text style={styles.smsText}>
-                        {loading ? "SENDING..." : "SEND CODE VIA SMS"}
-                    </Text>
-                </TouchableOpacity>
-            )}
-
-            {/* ERROR */}
-            {error ? (
-                <Text style={{ color: "#F87171", marginBottom: 10 }}>
-                    {error}
-                </Text>
-            ) : null}
-
-            {/* Divider */}
-            <View style={styles.dividerRow}>
-                <View style={styles.divider} />
-                <Text style={styles.orText}>OR</Text>
-                <View style={styles.divider} />
-            </View>
-            {/* Apple Login */}
-            {Platform.OS === "ios" && (
-                <AppleAuthentication.AppleAuthenticationButton
-                    buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
-                    buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                    cornerRadius={12}
-                    style={{ height: 48, marginBottom: 12 }}
-                    onPress={async () => {
-                        const credential = await AppleAuthentication.signInAsync({
-                            requestedScopes: [
-                                AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-                                AppleAuthentication.AppleAuthenticationScope.EMAIL,
-                            ],
-                        });
-
-                        console.log("Apple user:", credential);
-                        // send credential.identityToken to backend
-                    }}
-                />
-            )}
-
-            {/* Google Login */}
-            <TouchableOpacity
-                style={styles.socialButton}
-                disabled={!request}
-                onPress={() => promptAsync()}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
             >
-                <Text style={styles.socialText}>Continue with Google</Text>
-            </TouchableOpacity>
+                <LinearGradient
+                    colors={["#0B0F14", "#121826"]}
+                    style={styles.container}
+                >
+                    <StatusBar style="light" />
+
+                    {/* Back Button */}
+                    <TouchableOpacity onPress={() => router.push("/index")} style={styles.backButton}>
+                        <Text style={styles.backArrow}>←</Text>
+                    </TouchableOpacity>
+
+                    {/* Title */}
+                    <Text style={styles.title}>Join the Grid.</Text>
+                    <Text style={styles.subtitle}>
+                        Enter your mobile number to verify your account.
+                        We hate spam too.
+                    </Text>
+
+                    {/* Phone Input */}
+                    <View style={styles.phoneContainer}>
+                        <TouchableOpacity style={styles.countryBox}>
+                            <CountryPicker
+                                countryCode={countryCode}
+                                withFilter
+                                withFlag
+                                withCallingCode
+                                withEmoji
+                                onSelect={(country: Country) => {
+                                    setCountryCode(country.cca2);
+                                    setCallingCode(country.callingCode[0]);
+                                }}
+                            />
+                            <Text style={styles.code}>+{callingCode}</Text>
+                        </TouchableOpacity>
+
+                        <TextInput
+                            placeholder="Phone number"
+                            placeholderTextColor="#6B7280"
+                            keyboardType="phone-pad"
+                            value={phone}
+                            onChangeText={setPhone}
+                            style={styles.phoneInput}
+                        />
+                    </View>
 
 
-            {/* Footer */}
-            <Text style={styles.footer}>
-                By signing up, you agree to our{" "}
-                <Text style={styles.link}>Terms</Text> &{" "}
-                <Text style={styles.link}>Privacy Policy</Text>.
-                {"\n"}Drive safely.
-            </Text>
-        </LinearGradient>
+                    {/* OTP INPUT */}
+                    {step === "OTP" && (
+                        <>
+                            <TextInput
+                                placeholder="Enter 6-digit OTP"
+                                placeholderTextColor="#6B7280"
+                                keyboardType="number-pad"
+                                value={otp}
+                                onChangeText={setOtp}
+                                maxLength={6}
+                                autoFocus
+                                textContentType="oneTimeCode"
+                                autoComplete="sms-otp"
+                                style={styles.otpInput}
+                            />
+
+                            <TouchableOpacity
+                                style={styles.smsButton}
+                                onPress={handleVerifyOtp}
+                                disabled={loading}
+                            >
+                                <Text style={styles.smsText}>
+                                    {loading ? "VERIFYING..." : "VERIFY OTP"}
+                                </Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                disabled={cooldown > 0}
+                                onPress={handleSendOtp}
+                            >
+                                <Text style={{ color: "#22D3EE", textAlign: "center" }}>
+                                    {cooldown > 0
+                                        ? `Resend in ${cooldown}s`
+                                        : "Resend OTP"}
+                                </Text>
+                            </TouchableOpacity>
+                        </>
+                    )}
+
+                    {/* SEND OTP BUTTON */}
+                    {step === "PHONE" && (
+                        <TouchableOpacity
+                            style={styles.smsButton}
+                            onPress={handleSendOtp}
+                            disabled={loading}
+                        >
+                            <Text style={styles.smsText}>
+                                {loading ? "SENDING..." : "SEND CODE VIA SMS"}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+
+                    {/* ERROR */}
+                    {error ? (
+                        <Text style={{ color: "#F87171", marginBottom: 10 }}>
+                            {error}
+                        </Text>
+                    ) : null}
+
+                    {/* Divider */}
+                    <View style={styles.dividerRow}>
+                        <View style={styles.divider} />
+                        <Text style={styles.orText}>OR</Text>
+                        <View style={styles.divider} />
+                    </View>
+                    {/* Apple Login */}
+                    {Platform.OS === "ios" && (
+                        <AppleAuthentication.AppleAuthenticationButton
+                            buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                            buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                            cornerRadius={12}
+                            style={{ height: 48, marginBottom: 12 }}
+                            onPress={async () => {
+                                const credential = await AppleAuthentication.signInAsync({
+                                    requestedScopes: [
+                                        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                                        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+                                    ],
+                                });
+
+                                console.log("Apple user:", credential);
+                                // send credential.identityToken to backend
+                            }}
+                        />
+                    )}
+
+                    {/* Google Login */}
+                    <TouchableOpacity
+                        style={styles.socialButton}
+                        disabled={!request}
+                        onPress={() => promptAsync()}
+                    >
+                        <Text style={styles.socialText}>Continue with Google</Text>
+                    </TouchableOpacity>
+
+
+                    {/* Footer */}
+                    <Text style={styles.footer}>
+                        By signing up, you agree to our{" "}
+                        <Text style={styles.link}>Terms</Text> &{" "}
+                        <Text style={styles.link}>Privacy Policy</Text>.
+                        {"\n"}Drive safely.
+                    </Text>
+                </LinearGradient>
+            </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
     );
 }
 
@@ -324,6 +334,23 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         fontSize: 15,
         fontWeight: "600",
+    },
+
+    otpInput: {
+        borderWidth: 1,
+        borderColor: "#22D3EE",
+        borderRadius: 12,
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        color: "#FFFFFF",
+        fontSize: 16,
+        shadowColor: "#22D3EE",
+        shadowOpacity: 0.6,
+        shadowRadius: 8,
+        marginBottom: 20,
+        width: '60%',
+        alignSelf: 'center',
+        textAlign: 'center',
     },
 
     phoneInput: {
