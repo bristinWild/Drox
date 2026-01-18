@@ -116,7 +116,7 @@ export default function CreateEventScreen() {
             <View style={styles.container}>
                 {/* HEADER */}
                 <View style={styles.header}>
-                    <Text style={styles.title}>Create Events</Text>
+                    <Text style={styles.title}>Create Event</Text>
                     <TouchableOpacity onPress={() => router.back()}>
                         <Text style={styles.close}>Close</Text>
                     </TouchableOpacity>
@@ -288,6 +288,7 @@ const styles = StyleSheet.create({
         color: "#8B2F4B",
         fontSize: 22,
         fontWeight: "800",
+        fontFamily: "Marker Felt"
     },
 
     close: {
@@ -313,6 +314,7 @@ const styles = StyleSheet.create({
         marginBottom: 6,
         fontSize: 13,
         fontWeight: "600",
+        fontStyle: "italic",
     },
 
 
