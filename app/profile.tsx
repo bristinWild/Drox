@@ -7,6 +7,21 @@ import { Image } from "react-native";
 export default function ProfileScreen() {
     const insets = useSafeAreaInsets();
 
+    function ProfileItem({
+        label,
+        onPress,
+    }: {
+        label: string;
+        onPress?: () => void;
+    }) {
+        return (
+            <TouchableOpacity style={styles.item} onPress={onPress}>
+                <Text style={styles.itemText}>{label}</Text>
+            </TouchableOpacity>
+        );
+    }
+
+
     return (
         <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
             {/* HEADER */}
@@ -29,6 +44,9 @@ export default function ProfileScreen() {
 
             {/* ACTIONS */}
             <View style={styles.section}>
+                <ProfileItem label="Messages" />
+                <ProfileItem label="Create Event" onPress={() => router.push("/create-event")} />
+                <ProfileItem label="My Bookings" />
                 <ProfileItem label="Edit Profile" />
                 <ProfileItem label="Recent Activities" />
                 <ProfileItem label="Settings" />
