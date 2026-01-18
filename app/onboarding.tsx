@@ -45,10 +45,10 @@ export default function OnboardingScreen() {
                 style={{ flex: 1 }}
                 behavior={Platform.OS === "ios" ? "padding" : undefined}
             >
-                <LinearGradient colors={["#0B0F14", "#121826"]} style={styles.container}>
-                    <Text style={styles.title}>Welcome to DROX</Text>
+                <LinearGradient colors={["#B3E0F2", "#FFFFFF"]} style={styles.container}>
+                    <Text style={styles.title}>Welcome to <Text style={styles.grid}>DROX.</Text></Text>
                     <Text style={styles.subtitle}>
-                        Let others recognize you on the grid.
+                        Let others recognize you on the party.
                     </Text>
                     <TouchableOpacity
                         onPress={() => router.back()}
@@ -69,7 +69,7 @@ export default function OnboardingScreen() {
                     {/* Username */}
                     <TextInput
                         placeholder="Username"
-                        placeholderTextColor="#6B7280"
+                        placeholderTextColor="#9AA6B2"
                         style={styles.input}
                         value={username}
                         onChangeText={setUsername}
@@ -78,7 +78,7 @@ export default function OnboardingScreen() {
                     {/* Bio */}
                     <TextInput
                         placeholder="Short intro (optional)"
-                        placeholderTextColor="#6B7280"
+                        placeholderTextColor="#9AA6B2"
                         style={[styles.input, { height: 80 }]}
                         value={bio}
                         onChangeText={setBio}
@@ -90,7 +90,7 @@ export default function OnboardingScreen() {
                         style={styles.input}
                         onPress={() => setShowPicker(true)}
                     >
-                        <Text style={{ color: dob ? "#FFFFFF" : "#6B7280" }}>
+                        <Text style={{ color: dob ? "#2E2E2E" : "#9AA6B2" }}>
                             {dob
                                 ? dob.toLocaleDateString()
                                 : "Date of birth"}
@@ -103,6 +103,7 @@ export default function OnboardingScreen() {
                             mode="date"
                             display={Platform.OS === "ios" ? "spinner" : "default"}
                             maximumDate={new Date()}
+                            textColor="#2E2E2E"
                             onChange={(_, selectedDate) => {
                                 setShowPicker(false);
                                 if (selectedDate) setDob(selectedDate);
@@ -137,79 +138,109 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         paddingHorizontal: 24,
-        paddingTop: 90,
+        paddingTop: 110,
     },
     title: {
-        color: "#FFFFFF",
+        color: "#8B2F4B",
         fontSize: 30,
         fontWeight: "800",
         marginBottom: 6,
+        letterSpacing: -0.2,
     },
+
     subtitle: {
-        color: "#9CA3AF",
+        color: "#5A3F4A",
         fontSize: 14,
         marginBottom: 30,
+        fontStyle: "italic",
     },
+
     avatarBox: {
         width: 110,
         height: 110,
         borderRadius: 55,
         borderWidth: 1,
-        borderColor: "#22D3EE",
+        borderColor: "#E6A57E",
+        backgroundColor: "#FFFFFF",
+        shadowColor: "#5674A6",
+        shadowOpacity: 0.15,
         alignSelf: "center",
+        shadowRadius: 12,
+        elevation: 4,
         marginBottom: 30,
         alignItems: "center",
         justifyContent: "center",
     },
+
     avatar: {
         width: 110,
         height: 110,
         borderRadius: 55,
     },
+
     avatarPlaceholder: {
-        color: "#22D3EE",
+        color: "#E6A57E",
         fontSize: 36,
         fontWeight: "600",
     },
+
     input: {
         borderWidth: 1,
-        borderColor: "#22D3EE",
+        borderColor: "#D6E3F0",
         borderRadius: 14,
         paddingVertical: 14,
         paddingHorizontal: 16,
-        color: "#FFFFFF",
+        backgroundColor: "#FFFFFF",
+        color: "#2E2E2E",
         fontSize: 15,
         marginBottom: 16,
     },
+
     button: {
-        backgroundColor: "#D9F50A",
+        backgroundColor: "#5674A6",
         paddingVertical: 16,
-        borderRadius: 14,
+        borderRadius: 18,
         alignItems: "center",
         marginTop: 10,
+        shadowColor: "#5674A6",
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+        elevation: 4,
     },
+
     buttonText: {
-        color: "#0B0F14",
+        color: "#FFFFFF",
         fontSize: 15,
         fontWeight: "800",
         letterSpacing: 1,
     },
+
+
     skip: {
-        color: "#22D3EE",
+        color: "#E6A57E",
         textAlign: "center",
         marginTop: 20,
+        fontWeight: "600",
     },
 
     backButton: {
         position: "absolute",
-        top: 50,
+        top: 65,
         left: 20,
     },
 
-
     backArrow: {
-        color: "#FFFFFF",
+        color: "#8B2F4B",
         fontSize: 26,
+        fontWeight: "700",
+
     },
+
+    grid: {
+        color: "#E6A57E",
+        fontFamily: "Marker Felt",
+    },
+
+
 
 });

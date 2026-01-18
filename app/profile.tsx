@@ -74,67 +74,96 @@ function ProfileItem({ label }: { label: string }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#0B0F14",
+        backgroundColor: "#F5FAFE",
         paddingHorizontal: 20,
     },
+
     header: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 24,
     },
+
     title: {
-        color: "#FFFFFF",
+        color: "#8B2F4B",
         fontSize: 22,
         fontWeight: "800",
+        fontFamily: "Marker Felt",
     },
+
     close: {
-        color: "#22D3EE",
+        color: "#E6A57E",
         fontSize: 14,
+        fontWeight: "600",
     },
+
     userCard: {
         alignItems: "center",
         marginBottom: 32,
+        paddingVertical: 24,
+        backgroundColor: "#FFFFFF",
+        borderRadius: 20,
+        shadowColor: "#5674A6",
+        shadowOpacity: 0.15,
+        shadowRadius: 16,
+        elevation: 4,
     },
+
     avatar: {
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: "#1F2937",
+        backgroundColor: "#E5EDF5",
         marginBottom: 12,
         overflow: "hidden",
     },
+
     name: {
-        color: "#FFFFFF",
+        color: "#2E2E2E",
         fontSize: 18,
         fontWeight: "700",
     },
+
     subtitle: {
-        color: "#9CA3AF",
+        color: "#7B8A99",
         marginTop: 4,
+        fontSize: 13,
+        fontStyle: "italic",
     },
+
     section: {
         gap: 14,
     },
+
     item: {
         paddingVertical: 16,
         paddingHorizontal: 16,
-        backgroundColor: "#0F172A",
-        borderRadius: 14,
+        backgroundColor: "#FFFFFF",
+        borderRadius: 16,
+
+        shadowColor: "#5674A6",
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+        elevation: 3,
     },
+
     itemText: {
-        color: "#FFFFFF",
+        color: "#2E2E2E",
         fontSize: 15,
+        fontWeight: "600",
     },
+
     logout: {
         marginTop: "auto",
-        paddingVertical: 20,
-        borderRadius: 14,
-        backgroundColor: "#7F1D1D",
+        paddingVertical: 18,
+        borderRadius: 16,
+        backgroundColor: "#FFF1F2",
         alignItems: "center",
     },
+
     logoutText: {
-        color: "#FCA5A5",
+        color: "#B91C1C",
         fontWeight: "700",
     },
 });

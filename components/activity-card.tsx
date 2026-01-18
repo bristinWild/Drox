@@ -31,42 +31,50 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: "#0F172A",
-        borderRadius: 16,
+
+        backgroundColor: "#FFFFFF",
+        borderRadius: 18,
         padding: 16,
-        borderWidth: 1,
-        borderColor: "#1F2937",
+
+        shadowColor: "#5674A6",
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 4,
     },
 
     activityTitle: {
-        color: "#FFFFFF",
+        color: "#2E2E2E",
         fontSize: 16,
         fontWeight: "700",
     },
 
     activityMeta: {
-        color: "#9CA3AF",
+        color: "#7B8A99",
         fontSize: 12,
         marginTop: 4,
     },
 
     activityTime: {
-        color: "#22D3EE",
+        color: "#E6A57E",
         fontSize: 12,
         marginTop: 6,
+        fontWeight: "600",
     },
 
     joinButton: {
-        backgroundColor: "#2563EB",
+        backgroundColor: "#5674A6",
         paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: 14,
+        paddingHorizontal: 18,
+        borderRadius: 16,
     },
+
 
     joinText: {
         color: "#FFFFFF",
         fontWeight: "800",
-        fontSize: 12,
+        fontSize: 13,
+        letterSpacing: 0.5,
     },
+
 
 })

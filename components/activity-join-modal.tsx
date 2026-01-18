@@ -102,16 +102,18 @@ const styles = StyleSheet.create({
     },
 
     modalTitle: {
-        color: "#FFFFFF",
+        color: "#8B2F4B",
         fontSize: 20,
         fontWeight: "800",
     },
 
     modalDesc: {
-        color: "#9CA3AF",
+        color: "#5A3F4A",
         marginTop: 8,
         marginBottom: 16,
+        lineHeight: 20,
     },
+
 
     statsRow: {
         flexDirection: "row",
@@ -120,8 +122,9 @@ const styles = StyleSheet.create({
     },
 
     stat: {
-        color: "#22D3EE",
+        color: "#7B8A99",
         fontSize: 13,
+        fontWeight: "600",
     },
 
     feeRow: {
@@ -131,35 +134,46 @@ const styles = StyleSheet.create({
     },
 
     feeLabel: {
-        color: "#9CA3AF",
+        color: "#7B8A99",
+        fontSize: 13,
     },
 
     feeValue: {
-        color: "#FFFFFF",
+        color: "#2E2E2E",
         fontWeight: "700",
+        fontSize: 15,
     },
 
     confirmButton: {
-        backgroundColor: "#2563EB",
+        backgroundColor: "#5674A6",
         paddingVertical: 16,
         borderRadius: 18,
         alignItems: "center",
+        shadowColor: "#5674A6",
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+        elevation: 4,
     },
+
 
     confirmText: {
         color: "#FFFFFF",
         fontWeight: "800",
+        letterSpacing: 1,
     },
 
+
     cancelText: {
-        color: "#9CA3AF",
+        color: "#E6A57E",
         textAlign: "center",
-        marginTop: 14,
+        marginTop: 16,
+        fontWeight: "600",
     },
+
 
     modalOverlay: {
         flex: 1,
-        backgroundColor: "rgba(0,0,0,0.6)",
+        backgroundColor: "rgba(0,0,0,0.35)",
     },
 
     modalCard: {
@@ -168,17 +182,24 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         height: SCREEN_HEIGHT,
-        backgroundColor: "#0B0F14",
+
+        backgroundColor: "#FFFFFF",
         borderTopLeftRadius: 28,
         borderTopRightRadius: 28,
         padding: 20,
+
+        shadowColor: "#5674A6",
+        shadowOpacity: 0.25,
+        shadowRadius: 30,
+        elevation: 10,
     },
+
 
     dragHandle: {
         width: 44,
         height: 5,
         borderRadius: 3,
-        backgroundColor: "#374151",
+        backgroundColor: "#D6E3F0",
         alignSelf: "center",
         marginBottom: 12,
     },

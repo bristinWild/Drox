@@ -96,7 +96,7 @@ export default function ExploreScreen() {
 
 
   return (
-    <LinearGradient colors={["#0B0F14", "#121826"]} style={styles.container}>
+    <LinearGradient colors={["#B3E0F2", "#FFFFFF"]} style={styles.container}>
       {/* <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}> */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -142,7 +142,7 @@ export default function ExploreScreen() {
 
           {/* HEADER */}
           <View style={[styles.header, { top: insets.top + 12 }]}>
-            <Text style={styles.logo}>DROX</Text>
+            {/* <Text style={styles.logo}>DROX</Text> */}
             <TouchableOpacity style={styles.profileCircle}
               onPress={() => router.push("/profile")}>
               <Image
@@ -156,7 +156,7 @@ export default function ExploreScreen() {
           {loadingLocation && (
             <ActivityIndicator
               size="large"
-              color="#22D3EE"
+              color="#5674A6"
               style={{ marginTop: 120 }}
             />
           )}
@@ -175,7 +175,7 @@ export default function ExploreScreen() {
 
                 <TextInput
                   placeholder="Where to chill?"
-                  placeholderTextColor="#6B7280"
+                  placeholderTextColor="#9AA6B2"
                   style={styles.search}
                 />
 
@@ -241,6 +241,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+
   bottomPanel: {
     position: "absolute",
     bottom: -SHEET_MAX_HEIGHT + SHEET_MIN_HEIGHT, // 👈 KEY
@@ -249,50 +250,60 @@ const styles = StyleSheet.create({
     height: SHEET_MAX_HEIGHT, // 👈 KEY
     paddingHorizontal: 20,
     paddingTop: 18,
-    backgroundColor: "rgba(11,15,20,0.97)",
+    backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    shadowColor: "#000",
-    shadowOpacity: 0.5,
+    shadowColor: "#5674A6",
+    shadowOpacity: 0.25,
     shadowRadius: 30,
+    elevation: 8,
   },
 
   logo: {
-    color: "#22D3EE",
+    color: "#8B2F4B",
     fontSize: 18,
     fontWeight: "800",
   },
+
   profileCircle: {
     width: 36,
     height: 36,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#22D3EE",
+    borderColor: "#E6A57E",
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#5674A6",
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
     alignItems: "center",
     justifyContent: "center",
   },
 
   profileImage: {
-    width: 36,
-    height: 36,
+    width: 46,
+    height: 46,
     borderRadius: 18,
   },
 
   search: {
     borderWidth: 1,
-    borderColor: "#22D3EE",
-    borderRadius: 14,
+    borderColor: "#D6E3F0",
+    borderRadius: 16,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    color: "#FFFFFF",
+    backgroundColor: "#FFFFFF",
+    color: "#2E2E2E",
     fontSize: 15,
     marginBottom: 18,
   },
+
   categories: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 22,
   },
+
   category: {
     flex: 1,
     marginHorizontal: 4,
@@ -302,32 +313,36 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: "center",
   },
+
   categoryText: {
     color: "#FFFFFF",
     fontSize: 12,
   },
+
   cta: {
     backgroundColor: "#2563EB",
     paddingVertical: 18,
     borderRadius: 18,
     alignItems: "center",
   },
+
   ctaText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "800",
     letterSpacing: 1,
   },
+
   mapOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(10,15,25,0.35)",
+    backgroundColor: "rgba(255,255,255,0.25)",
   },
 
   dragHandle: {
     width: 44,
     height: 5,
     borderRadius: 3,
-    backgroundColor: "#374151",
+    backgroundColor: "#D6E3F0",
     alignSelf: "center",
     marginBottom: 12,
   },

@@ -1,36 +1,35 @@
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import { ScrollView } from "react-native";
 
 
 
 export default function LandingScreen() {
     return (
         <LinearGradient
-            colors={["#0B0F14", "#111827"]}
+            colors={["#B3E0F2", "#FFFFFF"]}
             style={styles.container}
         >
             <StatusBar barStyle="light-content" />
 
-            {/* Logo */}
-            <View style={styles.logoContainer}>
-                <Text style={styles.logoIcon}>D</Text>
-                <Text style={styles.logoText}>DROX</Text>
-            </View>
 
             {/* Radar Graphic Placeholder */}
-            <View style={styles.radarContainer}>
-                <View style={styles.radarCircle} />
-                <View style={styles.radarLine} />
+            <View style={styles.imageContainer}>
+                <Image
+                    source={require("@/assets/images/hero1.png")}
+                    style={styles.heroImage}
+                    resizeMode="contain"
+                />
             </View>
 
             {/* Headline */}
-            <Text style={styles.title}>The Road{"\n"}is Talking.</Text>
+            <Text style={styles.title}>Discover experiences <Text style={styles.you}>around you.</Text></Text>
 
             {/* Subtitle */}
             <Text style={styles.subtitle}>
-                Instantly voice-connect with drivers around you.
-                Traffic signals or highways, you're never alone.
+                Meet people who want to explore like you do.
+                Safe, shared experiences — wherever you are.
             </Text>
 
             {/* CTA */}
@@ -52,84 +51,109 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         paddingHorizontal: 24,
-        justifyContent: "center",
+        justifyContent: "flex-start",
     },
 
     logoContainer: {
         position: "absolute",
-        top: 60,
+        top: 88,          // safe under status bar
         left: 24,
-        flexDirection: "row",
-        alignItems: "center",
+        zIndex: 10,       // ensures it stays above background only
     },
+
     logoIcon: {
-        color: "#22D3EE",
+        color: "#B3E0F2",
         fontSize: 26,
         fontWeight: "900",
         marginRight: 6,
     },
     logoText: {
-        color: "#FFFFFF",
+        color: "#99244D",
         fontSize: 18,
         fontWeight: "700",
         letterSpacing: 1,
     },
 
-    radarContainer: {
+    //    logoImage: {
+    //         width: 140,
+    //         height: 56,
+    //         opacity: 0.92,
+    //     },
+
+    logoWrapper: {
         alignItems: "center",
-        marginBottom: 40,
-    },
-    radarCircle: {
-        width: 260,
-        height: 260,
-        borderRadius: 130,
-        borderWidth: 1,
-        borderColor: "rgba(34,211,238,0.3)",
-    },
-    radarLine: {
-        position: "absolute",
-        width: 2,
-        height: 130,
-        backgroundColor: "#22D3EE",
-        top: 0,
-        transform: [{ rotate: "45deg" }],
+        marginTop: 72,      // clears Dynamic Island
+        marginBottom: 24,   // space before hero image
     },
 
+    logoImage: {
+        width: 160,
+        height: 64,
+    },
+
+
     title: {
-        color: "#FFFFFF",
-        fontSize: 38,
+        color: "#8B2F4B",
+        fontSize: 30,
         fontWeight: "800",
-        marginBottom: 16,
+        marginBottom: 18,
+        marginTop: -55,//this could be adjusted based on image height
+        letterSpacing: -0.2,
     },
 
     subtitle: {
-        color: "#9CA3AF",
+        color: "#5A3F4A ",
         fontSize: 16,
         lineHeight: 24,
-        marginBottom: 40,
+        marginBottom: 36,
     },
 
+    you: {
+        color: "#E6A57E",
+        fontFamily: "Marker Felt",
+    },
+
+
     ctaButton: {
-        backgroundColor: "#D9F50A",
+        backgroundColor: "#5674A6",
         paddingVertical: 16,
-        borderRadius: 14,
+        borderRadius: 18,
         alignItems: "center",
         marginBottom: 20,
+        shadowColor: "#FFA05A",
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+        elevation: 4,
     },
+
     ctaText: {
-        color: "#0B0F14",
+        color: "#fcfcfc",
         fontSize: 16,
         fontWeight: "800",
         letterSpacing: 1,
     },
 
     loginText: {
-        color: "#9CA3AF",
+        color: "#9AA6B2",
         textAlign: "center",
         fontSize: 14,
     },
+
     loginLink: {
-        color: "#22D3EE",
-        fontWeight: "600",
+        color: "#E6A57E",
+        fontWeight: "700",
     },
+
+    imageContainer: {
+        alignItems: "center",
+        marginTop: 24,
+        marginBottom: 8,
+    },
+
+    heroImage: {
+        width: 420,
+        height: 420,
+    },
+
 });
+

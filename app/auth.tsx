@@ -29,10 +29,6 @@ import { useAuth } from "@/hooks/useAuth";
 WebBrowser.maybeCompleteAuthSession();
 
 
-
-
-
-
 export default function AuthScreen() {
 
     const [countryCode, setCountryCode] = useState<CountryCode>("US");
@@ -123,7 +119,7 @@ export default function AuthScreen() {
                 behavior={Platform.OS === "ios" ? "padding" : undefined}
             >
                 <LinearGradient
-                    colors={["#0B0F14", "#121826"]}
+                    colors={["#B3E0F2", "#FFFFFF"]}
                     style={styles.container}
                 >
                     <StatusBar style="light" />
@@ -134,7 +130,7 @@ export default function AuthScreen() {
                     </TouchableOpacity>
 
                     {/* Title */}
-                    <Text style={styles.title}>Join the Grid.</Text>
+                    <Text style={styles.title}>Join the <Text style={styles.grid}>party.</Text></Text>
                     <Text style={styles.subtitle}>
                         Enter your mobile number to verify your account.
                         We hate spam too.
@@ -159,7 +155,7 @@ export default function AuthScreen() {
 
                         <TextInput
                             placeholder="Phone number"
-                            placeholderTextColor="#6B7280"
+                            placeholderTextColor="#9AA6B2"
                             keyboardType="phone-pad"
                             value={phone}
                             onChangeText={setPhone}
@@ -173,7 +169,7 @@ export default function AuthScreen() {
                         <>
                             <TextInput
                                 placeholder="Enter 6-digit OTP"
-                                placeholderTextColor="#6B7280"
+                                placeholderTextColor="#9AA6B2"
                                 keyboardType="number-pad"
                                 value={otp}
                                 onChangeText={setOtp}
@@ -198,7 +194,7 @@ export default function AuthScreen() {
                                 disabled={cooldown > 0}
                                 onPress={handleSendOtp}
                             >
-                                <Text style={{ color: "#22D3EE", textAlign: "center" }}>
+                                <Text style={{ color: "#E6A57E", textAlign: "center" }}>
                                     {cooldown > 0
                                         ? `Resend in ${cooldown}s`
                                         : "Resend OTP"}
@@ -239,7 +235,7 @@ export default function AuthScreen() {
                             buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
                             buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
                             cornerRadius={12}
-                            style={{ height: 48, marginBottom: 12 }}
+                            style={{ height: 48, marginBottom: 16, marginTop: 6 }}
                             onPress={async () => {
                                 const credential = await AppleAuthentication.signInAsync({
                                     requestedScopes: [
@@ -281,28 +277,32 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         paddingHorizontal: 24,
-        paddingTop: 80,
+        paddingTop: 110,
     },
 
     backButton: {
         position: "absolute",
-        top: 50,
+        top: 65,
         left: 20,
     },
     backArrow: {
-        color: "#FFFFFF",
+        color: "#8B2F4B",
         fontSize: 26,
+        fontWeight: "700"
     },
 
     title: {
-        color: "#FFFFFF",
-        fontSize: 34,
+        color: "#8B2F4B",
         fontWeight: "800",
         marginBottom: 10,
+        fontSize: 30,
+        letterSpacing: -0.2,
     },
 
+
+
     subtitle: {
-        color: "#9CA3AF",
+        color: "#5A3F4A",
         fontSize: 15,
         lineHeight: 22,
         marginBottom: 30,
@@ -318,11 +318,17 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         borderWidth: 1,
-        borderColor: "#374151",
+        borderColor: "#D6E3F0",
         borderRadius: 12,
+        backgroundColor: "#FFFFFF",
         paddingHorizontal: 12,
         paddingVertical: 14,
         marginRight: 10,
+    },
+
+    grid: {
+        color: "#E6A57E",
+        fontFamily: "Marker Felt",
     },
 
     flag: {
@@ -331,52 +337,58 @@ const styles = StyleSheet.create({
     },
 
     code: {
-        color: "#FFFFFF",
+        color: "#8B2F4B",
         fontSize: 15,
         fontWeight: "600",
     },
 
     otpInput: {
         borderWidth: 1,
-        borderColor: "#22D3EE",
+        borderColor: "#D6E3F0",
         borderRadius: 12,
         paddingVertical: 14,
         paddingHorizontal: 16,
-        color: "#FFFFFF",
+        color: "#2E2E2E",
         fontSize: 16,
-        shadowColor: "#22D3EE",
-        shadowOpacity: 0.6,
-        shadowRadius: 8,
+        shadowColor: "#5674A6",
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
         marginBottom: 20,
         width: '60%',
         alignSelf: 'center',
         textAlign: 'center',
+        backgroundColor: "#FFFFFF",
     },
 
     phoneInput: {
         flex: 1,
         borderWidth: 1,
-        borderColor: "#22D3EE",
+        borderColor: "#D6E3F0",
         borderRadius: 12,
         paddingVertical: 14,
         paddingHorizontal: 16,
-        color: "#FFFFFF",
+        color: "#2E2E2E",
+        backgroundColor: "#FFFFFF",
         fontSize: 16,
-        shadowColor: "#22D3EE",
-        shadowOpacity: 0.6,
-        shadowRadius: 8,
+        shadowColor: "#5674A6",
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
     },
 
     smsButton: {
-        backgroundColor: "#D9F50A",
+        backgroundColor: "#5674A6",
         paddingVertical: 16,
-        borderRadius: 14,
+        borderRadius: 18,
         alignItems: "center",
         marginBottom: 26,
+        shadowColor: "#5674A6",
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+        elevation: 4,
     },
 
     smsText: {
-        color: "#0B0F14",
+        color: "#FFFFFF",
         fontSize: 15,
         fontWeight: "800",
         letterSpacing: 1,
@@ -391,39 +403,46 @@ const styles = StyleSheet.create({
     divider: {
         flex: 1,
         height: 1,
-        backgroundColor: "#374151",
+        backgroundColor: "#E5EDF5",
     },
 
     orText: {
-        color: "#9CA3AF",
+        color: "#9AA6B2",
         marginHorizontal: 12,
         fontSize: 13,
     },
 
     socialButton: {
         backgroundColor: "#FFFFFF",
-        paddingVertical: 14,
-        borderRadius: 12,
+        height: 48,
+        borderRadius: 16,
         alignItems: "center",
+        justifyContent: "center",
         marginBottom: 12,
+
+        shadowColor: "#5674A6",
+        shadowOpacity: 0.18,
+        shadowRadius: 12,
+        elevation: 4,
     },
 
+
     socialText: {
-        color: "#0B0F14",
+        color: "#8B2F4B",
         fontSize: 15,
-        fontWeight: "600",
+        fontWeight: "700",
     },
 
     footer: {
         marginTop: 30,
-        color: "#9CA3AF",
+        color: "#7B8A99",
         fontSize: 12,
         textAlign: "center",
         lineHeight: 18,
     },
 
     link: {
-        color: "#22D3EE",
+        color: "#E6A57E",
         fontWeight: "600",
     },
 });

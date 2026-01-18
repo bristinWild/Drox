@@ -12,6 +12,8 @@ import { router } from "expo-router";
 import { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { Dimensions } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const H_PADDING = 20 * 2;
@@ -101,9 +103,15 @@ export default function CreateEventScreen() {
 
 
     return (
-        <ScrollView
-            style={{ flex: 1, backgroundColor: "#0B0F14" }}
-            contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: 40 }}
+        <KeyboardAwareScrollView
+            style={{ flex: 1, backgroundColor: "#F5FAFE" }}
+            contentContainerStyle={{
+                paddingTop: insets.top + 16,
+                paddingBottom: 10, // important
+            }}
+            enableOnAndroid
+            keyboardShouldPersistTaps="handled"
+            extraScrollHeight={120}
         >
             <View style={styles.container}>
                 {/* HEADER */}
@@ -215,7 +223,7 @@ export default function CreateEventScreen() {
                 </TouchableOpacity>
 
             </View>
-        </ScrollView>
+        </KeyboardAwareScrollView>
     );
 }
 
@@ -235,10 +243,14 @@ function Input({
                 value={value}
                 onChangeText={onChange}
                 placeholder={placeholder}
-                placeholderTextColor="#6B7280"
+                placeholderTextColor="#9AA6B2"
                 keyboardType={keyboardType}
                 multiline={multiline}
+                scrollEnabled={false}
+                textAlignVertical="top"
                 style={[styles.input, multiline && { height: 100 }]}
+                returnKeyType="done"
+                blurOnSubmit={true}
             />
         </View>
     );
@@ -250,10 +262,10 @@ function Toggle({ active, onPress, text }: any) {
             onPress={onPress}
             style={[
                 styles.toggle,
-                active && { backgroundColor: "#22D3EE" },
+                active && { backgroundColor: "#5674A6", borderColor: "#5674A6", },
             ]}
         >
-            <Text style={[styles.toggleText, active && { color: "#020617" }]}>
+            <Text style={[styles.toggleText, active && { color: "#FFFFFF" }]}>
                 {text}
             </Text>
         </TouchableOpacity>
@@ -265,19 +277,24 @@ const styles = StyleSheet.create({
     container: {
         paddingHorizontal: 20,
     },
+
     header: {
         flexDirection: "row",
         justifyContent: "space-between",
         marginBottom: 24,
     },
+
     title: {
-        color: "#FFFFFF",
+        color: "#8B2F4B",
         fontSize: 22,
         fontWeight: "800",
     },
+
     close: {
-        color: "#22D3EE",
+        color: "#E6A57E",
+        fontWeight: "600",
     },
+
     imageBox: {
         height: 180,
         borderRadius: 16,
@@ -290,16 +307,24 @@ const styles = StyleSheet.create({
     imageText: {
         color: "#9CA3AF",
     },
+
     label: {
-        color: "#9CA3AF",
+        color: "#7B8A99",
         marginBottom: 6,
+        fontSize: 13,
+        fontWeight: "600",
     },
+
+
     input: {
-        backgroundColor: "#0F172A",
+        backgroundColor: "#FFFFFF",
         borderRadius: 14,
         padding: 14,
-        color: "#FFFFFF",
+        color: "#2E2E2E",
+        borderWidth: 1,
+        borderColor: "#D6E3F0",
     },
+
     toggleRow: {
         marginBottom: 16,
     },
@@ -307,29 +332,41 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         gap: 10,
     },
+
     toggle: {
         flex: 1,
         paddingVertical: 12,
-        borderRadius: 12,
-        backgroundColor: "#0F172A",
+        borderRadius: 14,
+        backgroundColor: "#FFFFFF",
+        borderWidth: 1,
+        borderColor: "#D6E3F0",
         alignItems: "center",
     },
+
     toggleText: {
-        color: "#9CA3AF",
+        color: "#7B8A99",
         fontWeight: "600",
     },
+
     submit: {
         marginTop: 24,
-        backgroundColor: "#22D3EE",
+        backgroundColor: "#5674A6",
         paddingVertical: 16,
-        borderRadius: 16,
+        borderRadius: 18,
         alignItems: "center",
+        shadowColor: "#5674A6",
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+        elevation: 4,
     },
+
     submitText: {
-        color: "#020617",
+        color: "#FFFFFF",
         fontWeight: "800",
         fontSize: 16,
+        letterSpacing: 1,
     },
+
 
     imageGrid: {
         flexDirection: "row",
@@ -375,7 +412,7 @@ const styles = StyleSheet.create({
     },
 
     addText: {
-        color: "#22D3EE",
+        color: "#E6A57E",
         fontSize: 32,
         fontWeight: "700",
     },
@@ -384,32 +421,43 @@ const styles = StyleSheet.create({
         width: SLOT_SIZE,
         height: SLOT_SIZE,
         borderRadius: 14,
-        backgroundColor: "#0F172A",
+        backgroundColor: "#FFFFFF",
+        borderWidth: 1,
+        borderColor: "#D6E3F0",
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
+        shadowColor: "#5674A6",
+        shadowOpacity: 0.12,
+        shadowRadius: 8,
+        elevation: 3,
+
     },
 
+
     escrowBox: {
-        backgroundColor: "#0F172A",
+        backgroundColor: "#F8FBFF",
         borderRadius: 14,
         padding: 14,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: "#22D3EE33",
+        borderColor: "#E5EDF5",
     },
 
+
     escrowTitle: {
-        color: "#22D3EE",
+        color: "#8B2F4B",
         fontWeight: "700",
         marginBottom: 6,
     },
 
+
     escrowText: {
-        color: "#9CA3AF",
+        color: "#5A3F4A",
         fontSize: 13,
         lineHeight: 18,
     },
+
 
 
 });
