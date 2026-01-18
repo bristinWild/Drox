@@ -29,6 +29,8 @@ export default function CreateEventScreen() {
     const [fee, setFee] = useState("");
     const [images, setImages] = useState<string[]>([]);
 
+
+
     const pickImages = async () => {
         if (images.length >= 6) return;
 
@@ -52,7 +54,7 @@ export default function CreateEventScreen() {
         }
 
         if (!title.trim()) {
-            alert("Please enter activity name");
+            alert("Please enter event name");
             return;
         }
 
@@ -61,28 +63,42 @@ export default function CreateEventScreen() {
             return;
         }
 
-        if (isPaid && (!fee || Number(fee) <= 0)) {
-            alert("Please enter valid joining fee");
-            return;
+        if (isPaid) {
+            if (!fee || Number(fee) <= 0) {
+                alert("Please enter a valid joining fee");
+                return;
+            }
         }
 
-        if (images.length >= 6) return;
-
-        if (!images.length) {
-            alert("Please add at least one image");
-        }
 
         const payload = {
             title,
             location,
             description,
             isPaid,
-            fee: isPaid ? fee : null,
+            fee: isPaid ? Number(fee) : 0,
+            payment: isPaid
+                ? {
+                    flow: "DROX_ESCROW",
+                    currency: "INR",
+                }
+                : null,
             images,
         };
 
+
         console.log("CREATE EVENT:", payload);
     };
+
+    // const isCreateDisabled =
+    //     !images.length ||
+    //     !title.trim() ||
+    //     !location.trim() ||
+    //     (isPaid &&
+    //         (!fee ||
+    //             !paymentMethod ||
+    //             (paymentMethod === "UPI" && !upiId.trim())));
+
 
     return (
         <ScrollView
@@ -145,16 +161,42 @@ export default function CreateEventScreen() {
                         <Toggle active={isPaid} onPress={() => setIsPaid(true)} text="Paid" />
                     </View>
                 </View>
+                {/* {isPaid && paymentMethod === "UPI" && (
+                    <Input
+                        label="UPI ID"
+                        value={upiId}
+                        onChange={setUpiId}
+                        placeholder="name@bank"
+                        autoCapitalize="none"
+                    />
+                )} */}
 
                 {/* FEE */}
                 {isPaid && (
-                    <Input
-                        label="Joining Fee (₹)"
-                        value={fee}
-                        onChange={setFee}
-                        keyboardType="numeric"
-                    />
+                    <>
+                        <Input
+                            label="Joining Fee (₹)"
+                            value={fee}
+                            onChange={setFee}
+                            keyboardType="numeric"
+                        />
+                        {isPaid && (
+                            <View style={styles.escrowBox}>
+                                <Text style={styles.escrowTitle}>Payments via Drox Escrow</Text>
+                                <Text style={styles.escrowText}>
+                                    All participant payments will be securely held by Drox.
+                                    The amount will be available to you inside the event group
+                                    during the activity.
+                                </Text>
+                            </View>
+                        )}
+
+
+                    </>
                 )}
+
+
+
 
                 {/* DESCRIPTION */}
                 <Input
@@ -166,15 +208,12 @@ export default function CreateEventScreen() {
 
                 {/* SUBMIT */}
                 <TouchableOpacity
-                    style={[
-                        styles.submit,
-                        !images.length && { opacity: 0.5 },
-                    ]}
-                    disabled={!images.length}
+                    style={styles.submit}
                     onPress={submit}
                 >
                     <Text style={styles.submitText}>Create Activity</Text>
                 </TouchableOpacity>
+
             </View>
         </ScrollView>
     );
@@ -350,6 +389,28 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         overflow: "hidden",
     },
+
+    escrowBox: {
+        backgroundColor: "#0F172A",
+        borderRadius: 14,
+        padding: 14,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: "#22D3EE33",
+    },
+
+    escrowTitle: {
+        color: "#22D3EE",
+        fontWeight: "700",
+        marginBottom: 6,
+    },
+
+    escrowText: {
+        color: "#9CA3AF",
+        fontSize: 13,
+        lineHeight: 18,
+    },
+
 
 });
 
