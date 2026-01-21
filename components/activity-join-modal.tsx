@@ -6,6 +6,7 @@ import Animated, {
     runOnJS
 } from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { router } from "expo-router";
 
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
@@ -77,7 +78,11 @@ export default function ActivityJoinModal({ activity, onClose }: any) {
                             <Text style={styles.feeValue}>{activity.joiningFee}</Text>
                         </View>
 
-                        <TouchableOpacity style={styles.confirmButton}>
+                        <TouchableOpacity style={styles.confirmButton}
+                            onPress={() => {
+                                onClose();
+                                router.push(`/chat/${activity.id}`);
+                            }}>
                             <Text style={styles.confirmText}>CONFIRM JOIN</Text>
                         </TouchableOpacity>
 
