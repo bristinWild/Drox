@@ -1,3 +1,5 @@
+import axios from "axios";
+
 const BASE_URL = "http://192.168.1.12:3000";
 // ⚠️ If testing on real phone, replace with LAN IP
 // e.g. http://192.168.1.10:3000
@@ -15,6 +17,16 @@ export async function sendOtp(phone: string) {
 
     return res.json();
 }
+
+export const getMe = async (accessToken: string) => {
+    const res = await axios.get(`${BASE_URL}/auth/me`, {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+        },
+    });
+
+    return res.data;
+};
 
 export async function verifyOtp(phone: string, otp: string) {
     const res = await fetch(`${BASE_URL}/auth/verify-otp`, {
