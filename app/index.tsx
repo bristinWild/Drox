@@ -39,7 +39,7 @@ export default function LandingScreen() {
 
             {/* Login */}
             <TouchableOpacity>
-                <Text onPress={() => router.push("/auth")} style={styles.loginText}>
+                <Text onPress={() => router.push("/auth-pin-login")} style={styles.loginText}>
                     Already have an account? <Text style={styles.loginLink}>Log In</Text>
                 </Text>
             </TouchableOpacity>

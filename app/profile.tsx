@@ -21,6 +21,9 @@ export default function ProfileScreen() {
         );
     }
 
+    const { logout } = useAuth();
+
+
 
     return (
         <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
@@ -53,7 +56,13 @@ export default function ProfileScreen() {
             </View>
 
             {/* LOGOUT */}
-            <TouchableOpacity style={styles.logout}>
+            <TouchableOpacity
+                style={styles.logout}
+                onPress={() => {
+                    logout();                 // clear auth state / tokens
+                    router.replace("/");      // redirects to app/index.tsx
+                }}
+            >
                 <Text style={styles.logoutText}>Logout</Text>
             </TouchableOpacity>
         </View>

@@ -22,9 +22,13 @@ type AuthContextType = {
     accessToken: string | null;
     user: any | null;
     loading: boolean;
+    isUnlocked: boolean;
+    unlockWithPin: () => void;
     login: (accessToken: string, refreshToken: string) => Promise<void>;
     logout: () => Promise<void>;
     refresh: () => Promise<boolean>;
+    setUser: (user: any) => void;
+    updateUserAndRoute: (user: any, unlocked?: boolean) => void;
 };
 
 /* ---------------- CONTEXT ---------------- */
@@ -42,12 +46,25 @@ export function AuthProvider({
     const [accessToken, setAccessToken] = useState<string | null>(null);
     const [user, setUser] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
+    const [bootstrapped, setBootstrapped] = useState(false);
+    const [isUnlocked, setIsUnlocked] = useState(false);
+
+    const unlockWithPin = () => {
+        setIsUnlocked(true);
+    };
+
+
+
+
 
     // Bootstrap auth on app start
     useEffect(() => {
+        setIsUnlocked(false); // lock on cold start
+
         (async () => {
             try {
                 const token = await getAccessToken();
+
                 if (!token) {
                     setLoading(false);
                     return;
@@ -70,15 +87,33 @@ export function AuthProvider({
     }, []);
 
 
-    const routeFromUser = (me: any) => {
+    const routeFromUser = (me: any, unlocked = false) => {
+
         if (!me.isActive) {
             router.replace("/auth");
-        } else if (!me.isOnboarded) {
-            router.replace("/onboarding");
-        } else {
-            router.replace("/(tabs)");
+            return;
         }
+
+
+        if (!me.hasPin) {
+            router.replace("/auth-pin-setup");
+            return;
+        }
+
+        if (me.hasPin && !unlocked) {
+            router.replace("/auth-pin-login");
+            return;
+        }
+
+        if (!me.isOnboarded) {
+            router.replace("/onboarding");
+            return;
+        }
+
+        router.replace("/(tabs)");
     };
+
+
 
     const login = async (access: string, refresh: string) => {
         await saveTokens(access, refresh);
@@ -87,7 +122,9 @@ export function AuthProvider({
         const me = await getMe(access);
         setUser(me);
 
-        routeFromUser(me);
+        unlockWithPin(); // visual / logical state only
+
+        routeFromUser(me, true); // ✅ force-unlocked
     };
 
     const logout = async () => {
@@ -110,14 +147,24 @@ export function AuthProvider({
         }
     };
 
+    const updateUserAndRoute = (me: any, unlocked = false) => {
+        setUser(me);
+        routeFromUser(me, unlocked);
+    }
+
     return (
         <AuthContext.Provider
             value={{
                 accessToken,
+                user,
                 loading,
+                isUnlocked,
+                unlockWithPin,
                 login,
                 logout,
                 refresh,
+                setUser,
+                updateUserAndRoute,
             }
             }
         >

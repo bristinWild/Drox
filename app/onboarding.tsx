@@ -5,6 +5,9 @@ import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Platform } from "react-native";
+import { completeOnboarding, getMe } from "@/api/auth";
+import { getAccessToken } from "@/constants/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 
 
@@ -14,6 +17,11 @@ export default function OnboardingScreen() {
     const [dob, setDob] = useState<Date | null>(null);
     const [showPicker, setShowPicker] = useState(false);
     const [avatar, setAvatar] = useState<string | null>(null);
+
+    const { user } = useAuth();
+    const { setUser } = useAuth();
+    const { updateUserAndRoute } = useAuth();
+
 
 
     const pickImage = async () => {
@@ -30,14 +38,21 @@ export default function OnboardingScreen() {
     };
 
     const handleContinue = async () => {
-        if (!username.trim()) return;
+        const accessToken = await getAccessToken();
+        if (!accessToken) throw new Error("No token");
 
-        // TODO: send to backend
-        // await updateProfile({ username, bio, dob, avatar })
+        await completeOnboarding(accessToken, {
+            userName: username,
+            bio,
+            avatarUrl: avatar ?? undefined,
+        });
 
-        router.replace("/(tabs)");
+        // 🔥 THIS IS THE KEY LINE
+        const me = await getMe(accessToken);
+
+        // update AuthProvider state
+        updateUserAndRoute(me, true); // if you expose setter
     };
-
     return (
 
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>

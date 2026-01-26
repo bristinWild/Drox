@@ -21,7 +21,7 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { router } from "expo-router";
-import { sendOtp, verifyOtp } from "@/api/auth";
+import { sendOtp, verifyOtp, checkHasPin, hasPin } from "@/api/auth";
 import { saveTokens } from "@/constants/auth";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -43,22 +43,36 @@ export default function AuthScreen() {
 
     const { login } = useAuth();
 
-    const handleSendOtp = async () => {
+    const handleContinue = async () => {
+        setLoading(true);
+        setError("");
+
+        const fullPhone = `+${callingCode}${phone}`;
+
         try {
-            setLoading(true);
-            setError("");
+            const res = await hasPin(fullPhone);
 
-            const fullPhone = `+${callingCode}${phone}`;
+            if (res.hasPin) {
+                router.push({
+                    pathname: "/auth-pin-verify",
+                    params: { phone: fullPhone },
+                });
+                return;
+            }
+
+
+            // New user → OTP
             await sendOtp(fullPhone);
-
             setStep("OTP");
             setCooldown(60);
-        } catch (e) {
-            setError("Failed to send OTP");
+        } catch {
+            setError("Something went wrong");
         } finally {
             setLoading(false);
         }
     };
+
+
 
 
     const handleVerifyOtp = async () => {
@@ -69,17 +83,16 @@ export default function AuthScreen() {
             const fullPhone = `+${callingCode}${phone}`;
             const res = await verifyOtp(fullPhone, otp);
 
+            // 🔥 DO NOT ROUTE
             await login(res.accessToken, res.refreshToken);
 
-            console.log("User:", res.user);
-
-            router.replace("/onboarding");
-        } catch (e) {
+        } catch {
             setError("Invalid or expired OTP");
         } finally {
             setLoading(false);
         }
     };
+
 
     useEffect(() => {
         if (!cooldown) return;
@@ -193,7 +206,7 @@ export default function AuthScreen() {
 
                             <TouchableOpacity
                                 disabled={cooldown > 0}
-                                onPress={handleSendOtp}
+                                onPress={handleContinue}
                             >
                                 <Text style={{ color: "#E6A57E", textAlign: "center" }}>
                                     {cooldown > 0
@@ -208,11 +221,11 @@ export default function AuthScreen() {
                     {step === "PHONE" && (
                         <TouchableOpacity
                             style={styles.smsButton}
-                            onPress={handleSendOtp}
+                            onPress={handleContinue}
                             disabled={loading}
                         >
                             <Text style={styles.smsText}>
-                                {loading ? "SENDING..." : "SEND CODE VIA SMS"}
+                                {loading ? "SENDING..." : "CONTINUE"}
                             </Text>
                         </TouchableOpacity>
                     )}
