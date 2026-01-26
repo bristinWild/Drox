@@ -91,8 +91,10 @@ export async function completeOnboarding(
     accessToken: string,
     data: {
         userName: string;
+        dob: string;
         bio?: string;
         avatarUrl?: string;
+
     }
 ) {
     const res = await fetch("http://192.168.1.12:3000/user/onboarding", {

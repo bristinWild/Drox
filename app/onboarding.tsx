@@ -11,12 +11,14 @@ import { useAuth } from "@/hooks/useAuth";
 
 
 
+
 export default function OnboardingScreen() {
     const [username, setUsername] = useState("");
     const [bio, setBio] = useState("");
     const [dob, setDob] = useState<Date | null>(null);
     const [showPicker, setShowPicker] = useState(false);
     const [avatar, setAvatar] = useState<string | null>(null);
+
 
     const { user } = useAuth();
     const { setUser } = useAuth();
@@ -38,20 +40,25 @@ export default function OnboardingScreen() {
     };
 
     const handleContinue = async () => {
+
+        if (!dob) {
+            throw new Error("DOB is required");
+        }
         const accessToken = await getAccessToken();
         if (!accessToken) throw new Error("No token");
 
         await completeOnboarding(accessToken, {
             userName: username,
-            bio,
+            dob: dob.toISOString(),   // 👈 RIGHT HERE
+            bio: bio || undefined,
             avatarUrl: avatar ?? undefined,
         });
 
-        // 🔥 THIS IS THE KEY LINE
+
         const me = await getMe(accessToken);
 
-        // update AuthProvider state
-        updateUserAndRoute(me, true); // if you expose setter
+
+        updateUserAndRoute(me, true);
     };
     return (
 
