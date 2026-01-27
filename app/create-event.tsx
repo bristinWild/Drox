@@ -13,23 +13,61 @@ import { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { Dimensions } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { SearchBoxCore } from "@mapbox/search-js-core";
+
+
 
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const H_PADDING = 20 * 2;
 const GAP = 12;
 const SLOT_SIZE = (SCREEN_WIDTH - H_PADDING - GAP * 2) / 3;
+const MAPBOX_TOKEN = "pk.eyJ1IjoiYnJpc3RpbiIsImEiOiJjbWt4MXd2Z2EwNHhxM2ZzM2RoY3hkdjhlIn0.GyT9MWfHu7OMEX4yEGa1vw";
+
+const searchBox = new SearchBoxCore({
+    accessToken: MAPBOX_TOKEN,
+});
+
 
 
 export default function CreateEventScreen() {
     const insets = useSafeAreaInsets();
 
     const [title, setTitle] = useState("");
-    const [location, setLocation] = useState("");
+    const [locationQuery, setLocationQuery] = useState("");
+    const [locationResults, setLocationResults] = useState<any[]>([]);
+    const [locationData, setLocationData] = useState<any>(null);
+
     const [description, setDescription] = useState("");
     const [isPaid, setIsPaid] = useState(false);
     const [fee, setFee] = useState("");
     const [images, setImages] = useState<string[]>([]);
+    const [sessionToken, setSessionToken] = useState(
+        () => Math.random().toString(36).substring(2)
+    );
+
+    const searchLocation = async (query: string) => {
+        setLocationQuery(query);
+
+        if (query.length < 2) {
+            setLocationResults([]);
+            return;
+        }
+
+        try {
+            const res = await searchBox.suggest(query, {
+                sessionToken, // ✅ REQUIRED
+                limit: 5,
+                country: "IN",
+                types: "place,locality,neighborhood,address",
+            });
+
+            setLocationResults(res.suggestions || []);
+        } catch (err) {
+            console.log("Mapbox search error:", err);
+            setLocationResults([]);
+        }
+    };
 
 
 
@@ -50,6 +88,9 @@ export default function CreateEventScreen() {
 
 
     const submit = () => {
+
+        console.log("Submitting with location:", locationData);
+
         if (!images.length) {
             alert("Please add at least one image");
             return;
@@ -60,8 +101,8 @@ export default function CreateEventScreen() {
             return;
         }
 
-        if (!location.trim()) {
-            alert("Please enter location");
+        if (!locationData) {
+            alert("Please select a location");
             return;
         }
 
@@ -75,7 +116,7 @@ export default function CreateEventScreen() {
 
         const payload = {
             title,
-            location,
+            location: locationData,
             description,
             isPaid,
             fee: isPaid ? Number(fee) : 0,
@@ -101,13 +142,12 @@ export default function CreateEventScreen() {
     //             !paymentMethod ||
     //             (paymentMethod === "UPI" && !upiId.trim())));
 
-
     return (
         <KeyboardAwareScrollView
             style={{ flex: 1, backgroundColor: "#F5FAFE" }}
             contentContainerStyle={{
                 paddingTop: insets.top + 16,
-                paddingBottom: 10, // important
+                paddingBottom: 10,
             }}
             enableOnAndroid
             keyboardShouldPersistTaps="handled"
@@ -122,15 +162,12 @@ export default function CreateEventScreen() {
                     </TouchableOpacity>
                 </View>
 
-                {/* IMAGE */}
                 {/* IMAGES */}
                 <Text style={styles.label}>Event Images/Banners</Text>
-
                 <View style={styles.imageGrid}>
                     {images.map((uri, index) => (
                         <View key={uri} style={styles.imageSlot}>
                             <Image source={{ uri }} style={styles.image} />
-
                             <TouchableOpacity
                                 style={styles.remove}
                                 onPress={() =>
@@ -149,17 +186,75 @@ export default function CreateEventScreen() {
                     )}
                 </View>
 
-
                 {/* ACTIVITY NAME */}
                 <Input label="Event Name" value={title} onChange={setTitle} />
 
                 {/* LOCATION */}
-                <Input
-                    label="Location"
-                    value={location}
-                    onChange={setLocation}
-                    placeholder="Place / City"
-                />
+                <Text style={styles.label}>Location</Text>
+
+                <View style={{ zIndex: 100 }}>
+                    <TextInput
+                        value={locationQuery}
+                        onChangeText={searchLocation}
+                        placeholder="Place / City"
+                        placeholderTextColor="#9AA6B2"
+                        style={styles.input}
+                    />
+
+                    {locationResults.length > 0 && (
+                        <View style={styles.dropdown}>
+                            {locationResults.map((item) => (
+                                <TouchableOpacity
+                                    key={item.mapbox_id}
+                                    style={styles.dropdownItem}
+                                    onPress={async () => {
+                                        try {
+                                            // ✅ PASS THE FULL SUGGESTION OBJECT
+                                            const res = await searchBox.retrieve(item, {
+                                                sessionToken,
+                                            });
+
+                                            const feature = res.features?.[0];
+
+                                            if (!feature || !feature.geometry) {
+                                                alert("Unable to fetch location details");
+                                                return;
+                                            }
+
+                                            const [lng, lat] = feature.geometry.coordinates;
+
+                                            setLocationQuery(item.name);
+                                            setLocationResults([]);
+
+                                            setLocationData({
+                                                name: item.name,
+                                                address: item.place_formatted,
+                                                lat,
+                                                lng,
+                                            });
+
+                                            // 🔄 reset session for next search
+                                            setSessionToken(Math.random().toString(36).substring(2));
+
+                                            console.log("Selected location:", item.place_formatted, lat, lng);
+                                        } catch (err) {
+                                            console.log("Mapbox retrieve error:", err);
+                                            console.log("Suggestion item:", item);
+
+                                            alert("Failed to load location details");
+                                        }
+                                    }}
+
+                                >
+                                    <Text style={{ fontWeight: "600" }}>{item.name}</Text>
+                                    <Text style={{ fontSize: 12, color: "#7B8A99" }}>
+                                        {item.place_formatted}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    )}
+                </View>
 
                 {/* PAID / FREE */}
                 <View style={styles.toggleRow}>
@@ -169,15 +264,6 @@ export default function CreateEventScreen() {
                         <Toggle active={isPaid} onPress={() => setIsPaid(true)} text="Paid" />
                     </View>
                 </View>
-                {/* {isPaid && paymentMethod === "UPI" && (
-                    <Input
-                        label="UPI ID"
-                        value={upiId}
-                        onChange={setUpiId}
-                        placeholder="name@bank"
-                        autoCapitalize="none"
-                    />
-                )} */}
 
                 {/* FEE */}
                 {isPaid && (
@@ -188,23 +274,17 @@ export default function CreateEventScreen() {
                             onChange={setFee}
                             keyboardType="numeric"
                         />
-                        {isPaid && (
-                            <View style={styles.escrowBox}>
-                                <Text style={styles.escrowTitle}>Payments via Drox Escrow</Text>
-                                <Text style={styles.escrowText}>
-                                    All participant payments will be securely held by Drox.
-                                    The amount will be available to you inside the event group
-                                    during the activity.
-                                </Text>
-                            </View>
-                        )}
 
-
+                        <View style={styles.escrowBox}>
+                            <Text style={styles.escrowTitle}>Payments via Drox Escrow</Text>
+                            <Text style={styles.escrowText}>
+                                All participant payments will be securely held by Drox.
+                                The amount will be available to you inside the event group
+                                during the activity.
+                            </Text>
+                        </View>
                     </>
                 )}
-
-
-
 
                 {/* DESCRIPTION */}
                 <Input
@@ -215,16 +295,13 @@ export default function CreateEventScreen() {
                 />
 
                 {/* SUBMIT */}
-                <TouchableOpacity
-                    style={styles.submit}
-                    onPress={submit}
-                >
+                <TouchableOpacity style={styles.submit} onPress={submit}>
                     <Text style={styles.submitText}>Create Activity</Text>
                 </TouchableOpacity>
-
             </View>
         </KeyboardAwareScrollView>
     );
+
 }
 
 
@@ -458,6 +535,25 @@ const styles = StyleSheet.create({
         color: "#5A3F4A",
         fontSize: 13,
         lineHeight: 18,
+    },
+
+
+    dropdown: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 12,
+        marginTop: 6,
+        borderWidth: 1,
+        borderColor: "#E3EDF6",
+        shadowColor: "#000",
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
+        elevation: 6,
+    },
+
+    dropdownItem: {
+        padding: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: "#F0F0F0",
     },
 
 
