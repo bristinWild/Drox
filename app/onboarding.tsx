@@ -1,4 +1,4 @@
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback } from "react-native";
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback, ActivityIndicator, Modal, Alert } from "react-native";
 import { useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
@@ -8,6 +8,7 @@ import { Platform } from "react-native";
 import { completeOnboarding, getMe } from "@/api/auth";
 import { getAccessToken } from "@/constants/auth";
 import { useAuth } from "@/hooks/useAuth";
+import { uploadImageToCloudinary } from "@/utils/imageUpload";
 
 
 
@@ -18,6 +19,8 @@ export default function OnboardingScreen() {
     const [dob, setDob] = useState<Date | null>(null);
     const [showPicker, setShowPicker] = useState(false);
     const [avatar, setAvatar] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState("");
 
 
     const { user } = useAuth();
@@ -40,25 +43,55 @@ export default function OnboardingScreen() {
     };
 
     const handleContinue = async () => {
+        if (!username.trim()) {
+            alert("Username is required");
+            return;
+        }
 
         if (!dob) {
-            throw new Error("DOB is required");
+            alert("Date of birth is required");
+            return;
         }
-        const accessToken = await getAccessToken();
-        if (!accessToken) throw new Error("No token");
 
-        await completeOnboarding(accessToken, {
-            userName: username,
-            dob: dob.toISOString(),   // 👈 RIGHT HERE
-            bio: bio || undefined,
-            avatarUrl: avatar ?? undefined,
-        });
+        try {
+            setUploading(true);
+            setUploadProgress("Preparing...");
+            const accessToken = await getAccessToken();
+            if (!accessToken) throw new Error("No token");
 
 
-        const me = await getMe(accessToken);
+            let avatarUrl: string | undefined = undefined;
+            if (avatar) {
+                try {
+                    setUploadProgress("Uploading avatar...");
+                    console.log("Uploading avatar...");
+                    avatarUrl = await uploadImageToCloudinary(avatar);
+                    console.log("Avatar uploaded:", avatarUrl);
+                } catch (error) {
+                    console.error("Avatar upload failed:", error);
+                    alert("Failed to upload avatar, continuing without it");
+                }
+            }
 
+            setUploadProgress("Completing setup...");
 
-        updateUserAndRoute(me, true);
+            await completeOnboarding(accessToken, {
+                userName: username,
+                dob: dob.toISOString(),
+                bio: bio || undefined,
+                avatarUrl: avatarUrl,
+            });
+
+            const me = await getMe(accessToken);
+            updateUserAndRoute(me, true);
+
+        } catch (error: any) {
+            console.error("Onboarding error:", error);
+            alert(error.message || "Failed to complete onboarding");
+        } finally {
+            setUploading(false);
+            setUploadProgress("");
+        }
     };
     return (
 
@@ -151,6 +184,18 @@ export default function OnboardingScreen() {
                         <Text style={styles.skip}>Skip for now</Text>
                     </TouchableOpacity>
                 </LinearGradient>
+                <Modal
+                    visible={uploading}
+                    transparent
+                    animationType="fade"
+                >
+                    <View style={styles.loadingOverlay}>
+                        <View style={styles.loadingCard}>
+                            <ActivityIndicator size="large" color="#5674A6" />
+                            <Text style={styles.loadingText}>{uploadProgress}</Text>
+                        </View>
+                    </View>
+                </Modal>
             </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
     );
@@ -263,6 +308,27 @@ const styles = StyleSheet.create({
         fontFamily: "Marker Felt",
     },
 
+    loadingOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.7)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
 
+    loadingCard: {
+        backgroundColor: "#FFFFFF",
+        padding: 32,
+        borderRadius: 20,
+        alignItems: "center",
+        minWidth: 200,
+    },
+
+    loadingText: {
+        marginTop: 16,
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#5674A6",
+        textAlign: "center",
+    },
 
 });

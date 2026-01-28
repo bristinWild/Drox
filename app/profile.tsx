@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,27 +7,11 @@ import { Image } from "react-native";
 export default function ProfileScreen() {
     const insets = useSafeAreaInsets();
 
-    function ProfileItem({
-        label,
-        onPress,
-    }: {
-        label: string;
-        onPress?: () => void;
-    }) {
-        return (
-            <TouchableOpacity style={styles.item} onPress={onPress}>
-                <Text style={styles.itemText}>{label}</Text>
-            </TouchableOpacity>
-        );
-    }
-
     const { logout } = useAuth();
-
-
 
     return (
         <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
-            {/* HEADER */}
+            {/* HEADER - Keep outside ScrollView so it stays fixed */}
             <View style={styles.header}>
                 <Text style={styles.title}>Profile</Text>
                 <TouchableOpacity onPress={() => router.back()}>
@@ -35,56 +19,69 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* USER INFO */}
-            <View style={styles.userCard}>
-                <Image
-                    source={require("@/assets/images/cat-icon.png")}
-                    style={styles.avatar}
-                />
-                <Text style={styles.name}>Bristin</Text>
-                <Text style={styles.subtitle}>Solo Traveler</Text>
-            </View>
-
-            {/* ACTIONS */}
-            <View style={styles.section}>
-                <ProfileItem label="Messages" />
-                <ProfileItem label="Create Event" onPress={() => router.push("/create-event")} />
-                <ProfileItem label="My Bookings" />
-                <ProfileItem label="Edit Profile" />
-                <ProfileItem label="Recent Activities" />
-                <ProfileItem label="Settings" />
-            </View>
-
-            {/* LOGOUT */}
-            <TouchableOpacity
-                style={styles.logout}
-                onPress={() => {
-                    logout();                 // clear auth state / tokens
-                    router.replace("/");      // redirects to app/index.tsx
-                }}
+            {/* ✅ Wrap content in ScrollView */}
+            <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={[
+                    styles.scrollContent,
+                    { paddingBottom: insets.bottom + 20 }
+                ]}
+                showsVerticalScrollIndicator={false}
             >
-                <Text style={styles.logoutText}>Logout</Text>
-            </TouchableOpacity>
+                {/* USER INFO */}
+                <View style={styles.userCard}>
+                    <Image
+                        source={require("@/assets/images/cat-icon.png")}
+                        style={styles.avatar}
+                    />
+                    <Text style={styles.name}>Bristin</Text>
+                    <Text style={styles.subtitle}>Solo Traveler</Text>
+                </View>
+
+                {/* ACTIONS */}
+                <View style={styles.section}>
+                    <ProfileItem label="Messages" />
+                    <ProfileItem label="Create Event" onPress={() => router.push("/create-event")} />
+                    <ProfileItem label="Hosted Activities" onPress={() => router.push("/my-activities")} />
+                    <ProfileItem label="My Bookings" />
+                    <ProfileItem label="Edit Profile" />
+                    <ProfileItem label="Recent Activities" />
+                    <ProfileItem label="Settings" />
+                </View>
+
+                {/* LOGOUT */}
+                <TouchableOpacity
+                    style={styles.logout}
+                    onPress={() => {
+                        logout();
+                        router.replace("/");
+                    }}
+                >
+                    <Text style={styles.logoutText}>Logout</Text>
+                </TouchableOpacity>
+            </ScrollView>
         </View>
     );
 }
 
-function ProfileItem({ label }: { label: string }) {
+function ProfileItem({
+    label,
+    onPress,
+}: {
+    label: string;
+    onPress?: () => void;
+}) {
     return (
-        <TouchableOpacity style={styles.item}>
+        <TouchableOpacity style={styles.item} onPress={onPress}>
             <Text style={styles.itemText}>{label}</Text>
         </TouchableOpacity>
     );
 }
 
-
-
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#F5FAFE",
-        paddingHorizontal: 20,
     },
 
     header: {
@@ -92,6 +89,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 24,
+        paddingHorizontal: 20,
     },
 
     title: {
@@ -105,6 +103,15 @@ const styles = StyleSheet.create({
         color: "#E6A57E",
         fontSize: 14,
         fontWeight: "600",
+    },
+
+    // ✅ New styles for ScrollView
+    scrollView: {
+        flex: 1,
+    },
+
+    scrollContent: {
+        paddingHorizontal: 20,
     },
 
     userCard: {
@@ -143,6 +150,7 @@ const styles = StyleSheet.create({
 
     section: {
         gap: 14,
+        marginBottom: 24, // ✅ Add space before logout button
     },
 
     item: {
@@ -150,7 +158,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         backgroundColor: "#FFFFFF",
         borderRadius: 16,
-
         shadowColor: "#5674A6",
         shadowOpacity: 0.12,
         shadowRadius: 10,
@@ -164,11 +171,11 @@ const styles = StyleSheet.create({
     },
 
     logout: {
-        marginTop: "auto",
         paddingVertical: 18,
         borderRadius: 16,
         backgroundColor: "#FFF1F2",
         alignItems: "center",
+        marginBottom: 20,
     },
 
     logoutText: {
@@ -176,4 +183,3 @@ const styles = StyleSheet.create({
         fontWeight: "700",
     },
 });
-

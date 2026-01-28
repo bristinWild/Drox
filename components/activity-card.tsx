@@ -1,45 +1,84 @@
 import { TouchableOpacity, View, Text } from "react-native";
 import { StyleSheet } from "react-native";
 
-export default function ActivityCard({ item, onJoin }: any) {
-    return (
+interface ActivityCardProps {
+    item: {
+        id: string;
+        title: string;
+        description: string;
+        location: {
+            name: string;
+            address: string;
+        };
+        isPaid: boolean;
+        fee: string;
+        images: string[];
+        distance?: string;
+        people?: number;
+        createdAt: string;
+    };
+    onJoin: () => void;
+}
 
+export default function ActivityCard({ item, onJoin }: ActivityCardProps) {
+    // Calculate time ago
+    const getTimeAgo = (dateString: string) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInMs = now.getTime() - date.getTime();
+        const diffInMins = Math.floor(diffInMs / 60000);
+        const diffInHours = Math.floor(diffInMins / 60);
+        const diffInDays = Math.floor(diffInHours / 24);
+
+        if (diffInMins < 60) return `${diffInMins}m ago`;
+        if (diffInHours < 24) return `${diffInHours}h ago`;
+        return `${diffInDays}d ago`;
+    };
+
+    // ✅ Truncate title to max 30 characters
+    const truncateTitle = (title: string, maxLength: number = 30) => {
+        if (title.length <= maxLength) return title;
+        return title.substring(0, maxLength).trim() + '...';
+    };
+
+    return (
         <View style={styles.activityCard}>
-            <View>
-                <Text style={styles.activityTitle}>{item.title}</Text>
-                <Text style={styles.activityMeta}>
-                    {item.distance} • {item.people} joining
+            <View style={styles.contentContainer}>
+                <Text style={styles.activityTitle}>
+                    {truncateTitle(item.title)}
                 </Text>
-                <Text style={styles.activityTime}>{item.time}</Text>
+                <Text style={styles.activityMeta}>
+                    {item.distance || 'N/A'} • {item.people || 0} joining
+                </Text>
+                <Text style={styles.activityTime}>
+                    {getTimeAgo(item.createdAt)}
+                </Text>
             </View>
 
             <TouchableOpacity style={styles.joinButton} onPress={onJoin}>
                 <Text style={styles.joinText}>JOIN</Text>
             </TouchableOpacity>
         </View>
-
-
     );
 }
 
 const styles = StyleSheet.create({
-    activityList: {
-        gap: 12,
-    },
-
     activityCard: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-
         backgroundColor: "#FFFFFF",
         borderRadius: 18,
         padding: 16,
-
         shadowColor: "#5674A6",
         shadowOpacity: 0.15,
         shadowRadius: 12,
         elevation: 4,
+    },
+
+    contentContainer: {
+        flex: 1,
+        marginRight: 12,
     },
 
     activityTitle: {
@@ -68,13 +107,10 @@ const styles = StyleSheet.create({
         borderRadius: 16,
     },
 
-
     joinText: {
         color: "#FFFFFF",
         fontWeight: "800",
         fontSize: 13,
         letterSpacing: 0.5,
     },
-
-
-})
+});

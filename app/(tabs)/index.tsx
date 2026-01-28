@@ -9,7 +9,9 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   ActivityIndicator,
-  Image
+  Image,
+  Alert,
+  ScrollView, // ✅ Add ScrollView
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import MapView from "react-native-maps";
@@ -22,9 +24,9 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-na
 import { interpolate, Extrapolation } from "react-native-reanimated";
 import { router } from "expo-router";
 import ActivityJoinModal from "@/components/activity-join-modal";
-
-
-
+import { getActivities, Activity } from "@/api/activity";
+import { getAccessToken } from "@/constants/auth";
+import { Marker } from "react-native-maps";
 
 const SHEET_MAX_HEIGHT = 520;
 const SHEET_MIN_HEIGHT = 260;
@@ -34,18 +36,18 @@ export default function ExploreScreen() {
   const translateY = useSharedValue(0);
   const startY = useSharedValue(0);
 
-
-
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(true);
   const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
   const isJoinOpen = selectedActivity !== null;
-
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
 
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
+        Alert.alert("Permission Denied", "Location permission is required");
         setLoadingLocation(false);
         return;
       }
@@ -56,48 +58,83 @@ export default function ExploreScreen() {
     })();
   }, []);
 
+  useEffect(() => {
+    fetchActivities();
+  }, []);
+
+  const fetchActivities = async () => {
+    try {
+      setLoadingActivities(true);
+      const token = await getAccessToken();
+
+      if (!token) {
+        Alert.alert("Error", "Please login again");
+        router.replace("/auth");
+        return;
+      }
+
+      const data = await getActivities(token);
+      setActivities(data);
+    } catch (error: any) {
+      console.error("Failed to fetch activities:", error);
+      if (error.response?.status === 401) {
+        Alert.alert("Error", "Session expired. Please login again");
+        router.replace("/auth");
+      } else {
+        Alert.alert("Error", "Failed to load activities");
+      }
+    } finally {
+      setLoadingActivities(false);
+    }
+  };
+
+  const calculateDistance = (activityLat: number, activityLng: number) => {
+    if (!location) return "N/A";
+
+    const userLat = location.coords.latitude;
+    const userLng = location.coords.longitude;
+
+    const R = 6371;
+    const dLat = (activityLat - userLat) * Math.PI / 180;
+    const dLon = (activityLng - userLng) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(userLat * Math.PI / 180) * Math.cos(activityLat * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+
+    if (distance < 1) {
+      return `${Math.round(distance * 1000)}m`;
+    }
+    return `${distance.toFixed(1)}km`;
+  };
+
   const panGesture = Gesture.Pan().activeOffsetY([-10, 10])
     .onBegin(() => {
       startY.value = translateY.value;
     })
     .onUpdate((e) => {
       const nextY = startY.value + e.translationY;
-
       translateY.value = Math.max(
         -SHEET_MAX_HEIGHT + SHEET_MIN_HEIGHT,
         Math.min(nextY, 0)
       );
-
     })
     .onEnd((e) => {
       if (e.velocityY < -500 || translateY.value < -SHEET_MAX_HEIGHT / 2) {
-        translateY.value = withSpring(
-          -SHEET_MAX_HEIGHT + SHEET_MIN_HEIGHT
-        );
+        translateY.value = withSpring(-SHEET_MAX_HEIGHT + SHEET_MIN_HEIGHT);
       } else {
         translateY.value = withSpring(0);
       }
     });
 
-
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
   }));
 
-  const overlayStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(
-      translateY.value,
-      [-SHEET_MAX_HEIGHT + SHEET_MIN_HEIGHT, 0],
-      [0.6, 0],
-      Extrapolation.CLAMP
-    ),
-  }));
-
-
-
   return (
     <LinearGradient colors={["#B3E0F2", "#FFFFFF"]} style={styles.container}>
-      {/* <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}> */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -109,7 +146,7 @@ export default function ExploreScreen() {
           {/* MAP */}
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={StyleSheet.absoluteFill}>
-              {location && (
+              {location ? (
                 <MapView
                   style={StyleSheet.absoluteFill}
                   initialRegion={{
@@ -131,35 +168,46 @@ export default function ExploreScreen() {
                     left: 40,
                     right: 40,
                   }}
-                />
+                >
+                  {activities.map((activity) => (
+                    <Marker
+                      key={activity.id}
+                      coordinate={{
+                        latitude: activity.location.lat,
+                        longitude: activity.location.lng,
+                      }}
+                      title={activity.title}
+                      description={activity.location.name}
+                      onPress={() => setSelectedActivity(activity)}
+                    />
+                  ))}
+                </MapView>
+              ) : (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                  <ActivityIndicator size="large" color="#5674A6" />
+                  <Text style={{ color: '#9AA6B2', marginTop: 12 }}>
+                    Loading map...
+                  </Text>
+                </View>
               )}
             </View>
           </TouchableWithoutFeedback>
-
 
           {/* MAP DARK OVERLAY */}
           <View pointerEvents="none" style={styles.mapOverlay} />
 
           {/* HEADER */}
           <View style={[styles.header, { top: insets.top + 12 }]}>
-            {/* <Text style={styles.logo}>DROX</Text> */}
-            <TouchableOpacity style={styles.profileCircle}
-              onPress={() => router.push("/profile")}>
+            <TouchableOpacity
+              style={styles.profileCircle}
+              onPress={() => router.push("/profile")}
+            >
               <Image
                 source={require('@/assets/images/cat-icon.png')}
                 style={styles.profileImage}
               />
             </TouchableOpacity>
           </View>
-
-          {/* LOADER */}
-          {loadingLocation && (
-            <ActivityIndicator
-              size="large"
-              color="#5674A6"
-              style={{ marginTop: 120 }}
-            />
-          )}
 
           {/* BOTTOM PANEL */}
           {!isJoinOpen && (
@@ -179,59 +227,77 @@ export default function ExploreScreen() {
                   style={styles.search}
                 />
 
-                <View style={styles.activityList}>
-                  {ACTIVITIES.map((item) => (
-                    <ActivityCard
-                      key={item.id}
-                      item={item}
-                      onJoin={() => {
-                        setSelectedActivity(item);
-                      }}
-                    />
-                  ))}
-                </View>
+                {loadingActivities ? (
+                  <ActivityIndicator
+                    size="large"
+                    color="#5674A6"
+                    style={{ marginTop: 40 }}
+                  />
+                ) : activities.length === 0 ? (
+                  <View style={{ alignItems: 'center', marginTop: 40 }}>
+                    <Text style={{ color: '#9AA6B2', fontSize: 16 }}>
+                      No activities nearby
+                    </Text>
+                  </View>
+                ) : (
+                  // ✅ Wrap in ScrollView
+                  <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.activityList}
+                    showsVerticalScrollIndicator={false}
+                    bounces={true}
+                  >
+                    {activities.map((item) => (
+                      <ActivityCard
+                        key={item.id}
+                        item={{
+                          ...item,
+                          distance: calculateDistance(
+                            item.location.lat,
+                            item.location.lng
+                          ),
+                          people: 0,
+                        }}
+                        onJoin={() => setSelectedActivity(item)}
+                      />
+                    ))}
+                  </ScrollView>
+                )}
               </Animated.View>
             </GestureDetector>
           )}
-
-
-
-
-
         </LinearGradient>
       </KeyboardAvoidingView>
+
       {selectedActivity && (
         <ActivityJoinModal
           activity={selectedActivity}
           onClose={() => {
             setSelectedActivity(null);
-            translateY.value = withSpring(0); // reopen explore sheet
+            translateY.value = withSpring(0);
           }}
         />
       )}
-
-      {/* </TouchableWithoutFeedback> */}
-
     </LinearGradient>
   );
 }
 
-function Category({ label }: { label: string }) {
-  return (
-    <View style={styles.category}>
-      <Text style={styles.categoryText}>{label}</Text>
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
+
+  scrollView: {
+    flex: 1,
+  },
+
   container: {
     flex: 1,
   },
 
   activityList: {
     gap: 12,
+    paddingBottom: 20,
   },
+
   header: {
     position: "absolute",
     left: 20,
@@ -244,10 +310,10 @@ const styles = StyleSheet.create({
 
   bottomPanel: {
     position: "absolute",
-    bottom: -SHEET_MAX_HEIGHT + SHEET_MIN_HEIGHT, // 👈 KEY
+    bottom: -SHEET_MAX_HEIGHT + SHEET_MIN_HEIGHT,
     left: 0,
     right: 0,
-    height: SHEET_MAX_HEIGHT, // 👈 KEY
+    height: SHEET_MAX_HEIGHT,
     paddingHorizontal: 20,
     paddingTop: 18,
     backgroundColor: "#FFFFFF",
@@ -346,56 +412,4 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginBottom: 12,
   },
-
-
 });
-
-
-const ACTIVITIES = [
-  {
-    id: "1",
-    title: "Mountain Trek",
-    tag: "Outdoor",
-    distance: "5 km away",
-    people: 6,
-    time: "Starts 4:30 pm",
-    description: "Early morning trek with fellow solo travelers. Moderate difficulty.",
-    image: require("@/assets/images/hiking.png"),
-    joiningFee: "₹299",
-    online: 8,
-    male: 5,
-    female: 3,
-  },
-
-  {
-    id: "2",
-    title: "Chill Cafes",
-    tag: "Cafe",
-    distance: "2 km away",
-    people: 3,
-    time: "Open now",
-    description: "Cafe hopping, conversations, and meeting like-minded travelers.",
-    image: require("@/assets/images/cafe.png"),
-    joiningFee: "Free",
-    online: 4,
-    male: 2,
-    female: 2,
-  },
-
-  {
-    id: "3",
-    title: "Bar Hopping",
-    tag: "Nightlife",
-    distance: "3 km away",
-    people: 5,
-    time: "Tonight 8 pm",
-    description: "Explore the city nightlife with a friendly group.",
-    image: require("@/assets/images/beer-mug.png"),
-    joiningFee: "₹499",
-    online: 6,
-    male: 4,
-    female: 2,
-  },
-];
-
-

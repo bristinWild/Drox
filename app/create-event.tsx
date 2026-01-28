@@ -5,7 +5,10 @@ import {
     TextInput,
     TouchableOpacity,
     Image,
+    Alert,
     ScrollView,
+    ActivityIndicator,
+    Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -14,6 +17,11 @@ import * as ImagePicker from "expo-image-picker";
 import { Dimensions } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SearchBoxCore } from "@mapbox/search-js-core";
+import { createActivity } from "@/api/activity";
+import { getAccessToken } from "@/constants/auth";
+import { uploadImageToCloudinary } from "@/utils/imageUpload";
+
+
 
 
 
@@ -46,6 +54,9 @@ export default function CreateEventScreen() {
         () => Math.random().toString(36).substring(2)
     );
 
+    const [loading, setLoading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState("");
+
     const searchLocation = async (query: string) => {
         setLocationQuery(query);
 
@@ -56,7 +67,7 @@ export default function CreateEventScreen() {
 
         try {
             const res = await searchBox.suggest(query, {
-                sessionToken, // ✅ REQUIRED
+                sessionToken,
                 limit: 5,
                 country: "IN",
                 types: "place,locality,neighborhood,address",
@@ -87,10 +98,10 @@ export default function CreateEventScreen() {
     };
 
 
-    const submit = () => {
-
+    const submit = async () => {
         console.log("Submitting with location:", locationData);
 
+        // Validation
         if (!images.length) {
             alert("Please add at least one image");
             return;
@@ -113,24 +124,99 @@ export default function CreateEventScreen() {
             }
         }
 
+        try {
+            setLoading(true);
+            setUploadProgress("Preparing...");
+            const accessToken = await getAccessToken();
+            if (!accessToken) {
+                alert("Please login again");
+                router.replace("/auth");
+                return;
+            }
 
-        const payload = {
-            title,
-            location: locationData,
-            description,
-            isPaid,
-            fee: isPaid ? Number(fee) : 0,
-            payment: isPaid
-                ? {
-                    flow: "DROX_ESCROW",
-                    currency: "INR",
+            // ✅ Upload images with detailed logging
+            console.log("Starting image upload...");
+            console.log("Number of images to upload:", images.length);
+            setUploadProgress(`Creating memories...`);
+            let uploadedImageUrls: string[] = [];
+
+            try {
+                // Upload images one by one to see which one fails
+                for (let i = 0; i < images.length; i++) {
+                    console.log(`Uploading image ${i + 1}/${images.length}...`);
+                    console.log("Image URI:", images[i]);
+
+                    const url = await uploadImageToCloudinary(images[i]);
+                    uploadedImageUrls.push(url);
+
+                    console.log(`Image ${i + 1} uploaded successfully:`, url);
                 }
-                : null,
-            images,
-        };
+
+                console.log("All images uploaded successfully!");
+                console.log("Uploaded URLs:", uploadedImageUrls);
+
+            } catch (uploadError: any) {
+                console.error("Image upload failed:", uploadError);
+                console.error("Error message:", uploadError.message);
+                console.error("Error stack:", uploadError.stack);
+
+                alert(
+                    `Failed to upload images: ${uploadError.message}`
+                );
+                return;
+            }
+
+            setUploadProgress("Creating activity...");
+
+            // Build payload
+            const payload = {
+                title,
+                location: locationData,
+                description,
+                isPaid,
+                fee: isPaid ? Number(fee) : 0,
+                payment: isPaid
+                    ? {
+                        flow: "DROX_ESCROW",
+                        currency: "INR",
+                    }
+                    : null,
+                images: uploadedImageUrls,
+            };
+
+            console.log("Sending payload to API:", payload);
+
+            // Call API
+            const response = await createActivity(accessToken, payload);
+
+            console.log("Activity created successfully:", response);
+
+            router.push('/(tabs)')
 
 
-        console.log("CREATE EVENT:", payload);
+            alert(
+
+                "Event created successfully!"
+            );
+
+        } catch (error: any) {
+            console.error("Create activity error:", error);
+            console.error("Error response:", error.response?.data);
+
+            if (error.response?.status === 401) {
+                alert("Session expired. Please login again");
+                router.replace("/auth");
+            } else {
+                alert(
+                    error.response?.data?.message || error.message || "Failed to create event"
+                );
+            }
+        } finally {
+            setLoading(false);
+            setUploadProgress("");
+        }
+
+
     };
 
     // const isCreateDisabled =
@@ -299,6 +385,18 @@ export default function CreateEventScreen() {
                     <Text style={styles.submitText}>Create Activity</Text>
                 </TouchableOpacity>
             </View>
+            <Modal
+                visible={loading}
+                transparent
+                animationType="fade"
+            >
+                <View style={styles.loadingOverlay}>
+                    <View style={styles.loadingCard}>
+                        <ActivityIndicator size="large" color="#5674A6" />
+                        <Text style={styles.loadingText}>{uploadProgress}</Text>
+                    </View>
+                </View>
+            </Modal>
         </KeyboardAwareScrollView>
     );
 
@@ -556,6 +654,28 @@ const styles = StyleSheet.create({
         borderBottomColor: "#F0F0F0",
     },
 
+    loadingOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.7)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+
+    loadingCard: {
+        backgroundColor: "#FFFFFF",
+        padding: 32,
+        borderRadius: 20,
+        alignItems: "center",
+        minWidth: 200,
+    },
+
+    loadingText: {
+        marginTop: 16,
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#5674A6",
+        textAlign: "center",
+    },
 
 
 });
