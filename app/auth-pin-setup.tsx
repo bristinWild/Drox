@@ -52,7 +52,6 @@ export default function PinSetupScreen() {
 
         updateUserAndRoute(me, true);
 
-        // 🚫 DO NOT ROUTE
     };
 
 

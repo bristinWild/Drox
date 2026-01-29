@@ -6,8 +6,8 @@ export function useUserApi() {
     const { apiFetch } = useApi();
 
     const getMe = async () => {
-        const res = await apiFetch(`${BASE_URL}/auth/me`);
-        if (!res.ok) throw new Error("Failed");
+        const res = await apiFetch(`${BASE_URL}/user/me`);
+        if (!res.ok) throw new Error("Failed to fetch user");
         return res.json();
     };
 
