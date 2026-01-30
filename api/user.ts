@@ -11,5 +11,26 @@ export function useUserApi() {
         return res.json();
     };
 
-    return { getMe };
+    const editProfile = async (data: {
+        username?: string;
+        bio?: string;
+        avatarUrl?: string;
+    }) => {
+        const res = await apiFetch(`${BASE_URL}/user/edit-profile`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+        });
+
+        if (!res.ok) throw new Error("Failed to update profile");
+
+        return res.json();
+    };
+
+    return {
+        getMe,
+        editProfile,
+    };
 }

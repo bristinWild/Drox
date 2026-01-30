@@ -7,6 +7,9 @@ import { useUserApi } from "@/api/user";
 import { getAccessToken } from "@/constants/auth";
 import { useEffect, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { uploadImageToCloudinary } from "@/utils/imageUpload";
+import { ActivityIndicator } from "react-native";
 
 
 
@@ -21,15 +24,50 @@ export default function ProfileScreen() {
         phone: string | null;
     }
     const insets = useSafeAreaInsets();
+    const flip = useSharedValue(0);
+
+
+    const handleFlipToEdit = () => {
+        setIsEditing(true);
+        flip.value = withTiming(180, { duration: 500 });
+    };
+
+    const handleFlipToView = () => {
+        flip.value = withTiming(0, { duration: 500 });
+        setTimeout(() => setIsEditing(false), 250);
+    };
+
+    const frontStyle = useAnimatedStyle(() => ({
+        transform: [
+            { perspective: 1000 },
+            { rotateY: `${flip.value}deg` },
+        ],
+        opacity: flip.value < 90 ? 1 : 0,
+    }));
+
+    const backStyle = useAnimatedStyle(() => ({
+        transform: [
+            { perspective: 1000 },
+            { rotateY: `${flip.value + 180}deg` },
+        ],
+        opacity: flip.value > 90 ? 1 : 0,
+    }));
+
+
+
 
     const { logout } = useAuth();
-    const { getMe } = useUserApi();
+    const { getMe, editProfile } = useUserApi();
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState("");
     const [editBio, setEditBio] = useState("");
     const [editAvatar, setEditAvatar] = useState<string | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+
 
     const handlePickImage = async () => {
         if (!isEditing) return;
@@ -47,22 +85,49 @@ export default function ProfileScreen() {
     };
 
     const handleSaveProfile = async () => {
-        try {
-            // later: call PATCH /user/profile or onboarding update
-            setUser((prev) =>
-                prev
-                    ? {
-                        ...prev,
-                        name: editName,
-                        bio: editBio,
-                        avatarUrl: editAvatar,
-                    }
-                    : prev
-            );
+        if (isSaving) return;
 
-            setIsEditing(false);
+        try {
+            setIsSaving(true);
+
+            const payload: {
+                username?: string;
+                bio?: string;
+                avatarUrl?: string;
+            } = {};
+
+            const currentName = user?.name ?? "";
+            const currentBio = user?.bio ?? "";
+            const currentAvatar = user?.avatarUrl ?? undefined;
+
+            // Upload avatar if changed
+            if (
+                editAvatar &&
+                editAvatar !== currentAvatar &&
+                editAvatar.startsWith("file://")
+            ) {
+                const uploadedUrl = await uploadImageToCloudinary(editAvatar);
+                payload.avatarUrl = uploadedUrl;
+            }
+
+            if (editName.trim() !== currentName) {
+                payload.username = editName.trim();
+            }
+
+            if (editBio.trim() !== currentBio) {
+                payload.bio = editBio.trim();
+            }
+
+            if (Object.keys(payload).length > 0) {
+                const updatedUser = await editProfile(payload);
+                setUser(updatedUser);
+            }
+
+            handleFlipToView();
         } catch (err) {
             console.error("Failed to save profile", err);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -107,7 +172,7 @@ export default function ProfileScreen() {
 
     return (
         <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
-            {/* HEADER - Keep outside ScrollView so it stays fixed */}
+            {/* HEADER */}
             <View style={styles.header}>
                 <Text style={styles.title}>Profile</Text>
                 <TouchableOpacity onPress={() => router.back()}>
@@ -115,112 +180,175 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* ✅ Wrap content in ScrollView */}
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={[
                     styles.scrollContent,
-                    { paddingBottom: insets.bottom + 20 }
+                    { paddingBottom: insets.bottom + 24 },
                 ]}
                 showsVerticalScrollIndicator={false}
             >
-                <View style={styles.userCard}>
-                    <TouchableOpacity
-                        style={styles.editIcon}
-                        onPress={() => setIsEditing(true)}
-                    >
-                        <Text style={styles.editIconText}>
-                            {isEditing ? "Editing" : "Edit"}
-                        </Text>
-                    </TouchableOpacity>
+                {/* FLIP CARD */}
+                <View style={styles.flipContainer}>
+                    <View style={{ position: "relative", height: 220 }}>
+                        {/* FRONT */}
+                        <Animated.View style={[styles.card, frontStyle]}>
+                            <TouchableOpacity
+                                style={styles.editIcon}
+                                onPress={handleFlipToEdit}
+                            >
+                                <Text style={styles.editIconText}>Edit</Text>
+                            </TouchableOpacity>
 
-                    <TouchableOpacity
-                        activeOpacity={0.8}
-                        onPress={handlePickImage}
-                        disabled={!isEditing}
-                        style={styles.avatarWrapper}
-                    >
-                        <Image
-                            source={
-                                editAvatar
-                                    ? { uri: editAvatar }
-                                    : require("@/assets/images/cat-icon.png")
-                            }
-                            style={styles.avatar}
-                        />
-                        {isEditing && (
-                            <View style={styles.avatarOverlay}>
-                                <Text style={styles.avatarEditText}>📷</Text>
-                            </View>
-                        )}
-                    </TouchableOpacity>
+                            <Image
+                                source={
+                                    user?.avatarUrl
+                                        ? { uri: user.avatarUrl }
+                                        : require("@/assets/images/cat-icon.png")
+                                }
+                                style={styles.avatar}
+                            />
 
-                    {isEditing ? (
-                        <>
-                            <View style={styles.fieldCard}>
-                                <TextInput
-                                    value={editName}
-                                    onChangeText={setEditName}
-                                    style={styles.fieldInput}
-                                    placeholder="Your name"
-                                    placeholderTextColor="#9AA6B2"
-                                />
-                            </View>
-
-                            <View style={styles.fieldCard}>
-                                <TextInput
-                                    value={editBio}
-                                    onChangeText={setEditBio}
-                                    style={[styles.fieldInput, styles.fieldBio]}
-                                    placeholder="Tell something about yourself"
-                                    placeholderTextColor="#9AA6B2"
-                                    multiline
-                                />
-                            </View>
-                        </>
-                    ) : (
-                        <>
                             <Text style={styles.name}>{user?.name || "Anonymous"}</Text>
                             <Text style={styles.subtitle}>
                                 {user?.bio || "No bio added yet"}
                             </Text>
-                        </>
-                    )}
-                </View>
-                {isEditing && (
+                        </Animated.View>
 
+                        {/* BACK */}
+                        <Animated.View style={[styles.card, styles.cardBack, backStyle]}>
+                            {/* ✔ / ✕ */}
+                            <View
+                                style={{
+                                    position: "absolute",
+                                    top: 12,
+                                    right: 12,
+                                    flexDirection: "row",
+                                    gap: 8,
+                                    zIndex: 20,
+                                }}
+                            >
+                                {/* CANCEL */}
+                                <TouchableOpacity
+                                    disabled={isSaving}
+                                    onPress={handleFlipToView}
+                                    style={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: 16,
+                                        backgroundColor: "#E5E7EB",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        opacity: isSaving ? 0.5 : 1,
+                                    }}
+                                >
+                                    <Text style={{ fontWeight: "700", fontSize: 14 }}>✕</Text>
+                                </TouchableOpacity>
 
-                    <View style={styles.editActions}>
-                        <TouchableOpacity
-                            style={styles.cancelBtn}
-                            onPress={() => {
-                                setIsEditing(false);
-                                setEditName(user?.name || "");
-                                setEditBio(user?.bio || "");
-                                setEditAvatar(user?.avatarUrl || null);
-                            }}
-                        >
-                            <Text style={styles.cancelText}>Cancel</Text>
-                        </TouchableOpacity>
+                                {/* SAVE */}
+                                <TouchableOpacity
+                                    onPress={handleSaveProfile}
+                                    disabled={isSaving}
+                                    style={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: 16,
+                                        backgroundColor: "#5674A6",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        opacity: isSaving ? 0.7 : 1,
+                                    }}
+                                >
+                                    {isSaving ? (
+                                        <ActivityIndicator size="small" color="#FFFFFF" />
+                                    ) : (
+                                        <Text style={{ color: "#fff", fontWeight: "700" }}>✓</Text>
+                                    )}
+                                </TouchableOpacity>
+                            </View>
 
-                        <TouchableOpacity
-                            style={styles.saveBtn}
-                            onPress={handleSaveProfile}
-                        >
-                            <Text style={styles.saveText}>Save</Text>
-                        </TouchableOpacity>
+                            {/* AVATAR */}
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                onPress={handlePickImage}
+                                style={styles.avatarWrapper}
+                            >
+                                <Image
+                                    source={
+                                        editAvatar
+                                            ? { uri: editAvatar }
+                                            : require("@/assets/images/cat-icon.png")
+                                    }
+                                    style={styles.avatar}
+                                />
+                                <View style={styles.avatarOverlay}>
+                                    <Text style={styles.avatarEditText}>📷</Text>
+                                </View>
+                            </TouchableOpacity>
+
+                            {/* NAME (inline + pen) */}
+                            <View
+                                style={{
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    marginBottom: 6,
+                                }}
+                            >
+                                <TextInput
+                                    value={editName}
+                                    onChangeText={setEditName}
+                                    style={{
+                                        fontSize: 18,
+                                        fontWeight: "700",
+                                        color: "#2E2E2E",
+                                        textAlign: "center",
+                                        paddingRight: 6,
+                                    }}
+                                    placeholder="Your name"
+                                    placeholderTextColor="#9AA6B2"
+                                />
+                                <Text style={{ fontSize: 14, color: "#7B8A99" }}>✎</Text>
+                            </View>
+
+                            {/* BIO (inline + pen) */}
+                            <View
+                                style={{
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                }}
+                            >
+                                <TextInput
+                                    value={editBio}
+                                    onChangeText={setEditBio}
+                                    style={{
+                                        fontSize: 13,
+                                        color: "#7B8A99",
+                                        fontStyle: "italic",
+                                        textAlign: "center",
+                                        paddingRight: 6,
+                                    }}
+                                    placeholder="Tell something about yourself"
+                                    placeholderTextColor="#9AA6B2"
+                                    multiline
+                                />
+                                <Text style={{ fontSize: 13, color: "#7B8A99" }}>✎</Text>
+                            </View>
+                        </Animated.View>
                     </View>
-
-                )}
-
+                </View>
 
                 {/* ACTIONS */}
                 <View style={styles.section}>
                     <ProfileItem label="Messages" />
-                    <ProfileItem label="Create Event" onPress={() => router.push("/create-event")} />
-                    <ProfileItem label="My Hostings" onPress={() => router.push("/my-activities")} />
+                    <ProfileItem
+                        label="Create Event"
+                        onPress={() => router.push("/create-event")}
+                    />
+                    <ProfileItem
+                        label="My Hostings"
+                        onPress={() => router.push("/my-activities")}
+                    />
                     <ProfileItem label="My Bookings" />
-                    <ProfileItem label="Edit Profile" />
                     <ProfileItem label="Recent Activities" />
                     <ProfileItem label="Settings" />
                 </View>
@@ -235,9 +363,13 @@ export default function ProfileScreen() {
                 >
                     <Text style={styles.logoutText}>Logout</Text>
                 </TouchableOpacity>
-            </ScrollView>
-        </View>
+            </ScrollView >
+        </View >
     );
+
+
+
+
 }
 
 function ProfileItem({
@@ -281,7 +413,6 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
 
-    // ✅ New styles for ScrollView
     scrollView: {
         flex: 1,
     },
@@ -326,7 +457,7 @@ const styles = StyleSheet.create({
 
     section: {
         gap: 14,
-        marginBottom: 24, // ✅ Add space before logout button
+        marginBottom: 12,
     },
 
     item: {
@@ -491,6 +622,35 @@ const styles = StyleSheet.create({
         minHeight: 60,
         textAlignVertical: "top",
     },
+
+    flipContainer: {
+        width: "100%",
+        marginBottom: 12,
+        alignItems: "stretch",
+    },
+
+    card: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+
+        backgroundColor: "#FFFFFF",
+        borderRadius: 20,
+        paddingVertical: 24,
+        alignItems: "center",
+        backfaceVisibility: "hidden",
+
+        shadowColor: "#5674A6",
+        shadowOpacity: 0.15,
+        shadowRadius: 16,
+        elevation: 4,
+    },
+
+
+    cardBack: {
+        transform: [{ rotateY: "180deg" }],
+    }
 
 
 
