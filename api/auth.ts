@@ -1,6 +1,10 @@
 import axios from "axios";
+import { Gender } from "@/api/enums/GenderEnum";
 
 const BASE_URL = "http://192.168.1.12:3000";
+
+
+
 // ⚠️ If testing on real phone, replace with LAN IP
 // e.g. http://192.168.1.10:3000
 
@@ -94,7 +98,7 @@ export async function completeOnboarding(
         dob: string;
         bio?: string;
         avatarUrl?: string;
-
+        gender: Gender;
     }
 ) {
     const res = await fetch("http://192.168.1.12:3000/user/onboarding", {

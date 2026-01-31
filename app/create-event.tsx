@@ -39,6 +39,8 @@ const searchBox = new SearchBoxCore({
 
 
 export default function CreateEventScreen() {
+
+    type GenderPolicy = 'all' | 'male_only' | 'female_only';
     const insets = useSafeAreaInsets();
 
     const [title, setTitle] = useState("");
@@ -56,6 +58,8 @@ export default function CreateEventScreen() {
 
     const [loading, setLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState("");
+    const [genderPolicy, setGenderPolicy] = useState<GenderPolicy>('all');
+    const [maxParticipants, setMaxParticipants] = useState('');
 
     const searchLocation = async (query: string) => {
         setLocationQuery(query);
@@ -114,6 +118,11 @@ export default function CreateEventScreen() {
 
         if (!locationData) {
             alert("Please select a location");
+            return;
+        }
+
+        if (!maxParticipants || Number(maxParticipants) <= 0) {
+            alert('Please enter a valid participant limit');
             return;
         }
 
@@ -182,6 +191,8 @@ export default function CreateEventScreen() {
                     }
                     : null,
                 images: uploadedImageUrls,
+                genderPolicy,
+                maxParticipants: Number(maxParticipants),
             };
 
             console.log("Sending payload to API:", payload);
@@ -379,6 +390,38 @@ export default function CreateEventScreen() {
                     onChange={setDescription}
                     multiline
                 />
+
+                {/* WHO CAN JOIN */}
+                <View style={{ marginBottom: 20 }}>
+                    <Text style={styles.label}>Who can join</Text>
+
+                    <View style={styles.toggleGroup}>
+                        <Toggle
+                            active={genderPolicy === 'all'}
+                            onPress={() => setGenderPolicy('all')}
+                            text="Mix of both"
+                        />
+                        <Toggle
+                            active={genderPolicy === 'male_only'}
+                            onPress={() => setGenderPolicy('male_only')}
+                            text="Only male"
+                        />
+                        <Toggle
+                            active={genderPolicy === 'female_only'}
+                            onPress={() => setGenderPolicy('female_only')}
+                            text="Only female"
+                        />
+                    </View>
+                </View>
+
+                <Input
+                    label="Maximum participants"
+                    value={maxParticipants}
+                    onChange={setMaxParticipants}
+                    keyboardType="numeric"
+                    placeholder="e.g. 20"
+                />
+
 
                 {/* SUBMIT */}
                 <TouchableOpacity style={styles.submit} onPress={submit}>

@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
   Image,
   Alert,
-  ScrollView, // ✅ Add ScrollView
+  ScrollView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import MapView from "react-native-maps";
@@ -180,6 +180,16 @@ export default function ExploreScreen() {
     transform: [{ translateY: translateY.value }],
   }));
 
+  const handleJoined = (activityId: string) => {
+    setActivities(prev =>
+      prev.map(a =>
+        a.id === activityId
+          ? { ...a, people: (a.people || 0) + 1 }
+          : a
+      )
+    );
+  };
+
   return (
     <LinearGradient colors={["#B3E0F2", "#FFFFFF"]} style={styles.container}>
       <KeyboardAvoidingView
@@ -326,7 +336,8 @@ export default function ExploreScreen() {
                             item.location.lat,
                             item.location.lng
                           ),
-                          people: 0,
+                          people: item.participantCount ?? 0
+                          ,
                         }}
                         onJoin={() => setSelectedActivity(item)}
                       />
@@ -346,6 +357,7 @@ export default function ExploreScreen() {
             setSelectedActivity(null);
             translateY.value = withSpring(0);
           }}
+          onJoined={handleJoined}
         />
       )}
     </LinearGradient>

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { GenderPolicy } from "@/api/enums/GenderPolicyEnum";
 
 
 const BASE_URL = "http://192.168.1.12:3000";
@@ -20,6 +21,11 @@ export interface Activity {
     createdByUserId: string;
     createdAt: string;
     updatedAt: string;
+
+    participantCount?: number;
+    maleJoinedCount?: number;
+    femaleJoinedCount?: number;
+    maxParticipants?: number;
 }
 
 export interface CreateActivityPayload {
@@ -38,6 +44,11 @@ export interface CreateActivityPayload {
         currency: string;
     } | null;
     images: string[];
+
+    genderPolicy: GenderPolicy;
+    maxParticipants: number;
+
+
 }
 
 export const createActivity = async (

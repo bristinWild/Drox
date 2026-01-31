@@ -1,0 +1,1 @@
+export type GenderPolicy = 'all' | 'male_only' | 'female_only';

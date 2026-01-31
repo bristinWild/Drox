@@ -14,6 +14,9 @@ import { uploadImageToCloudinary } from "@/utils/imageUpload";
 
 
 export default function OnboardingScreen() {
+    type Gender = 'male' | 'female' | 'other';
+
+
     const [username, setUsername] = useState("");
     const [bio, setBio] = useState("");
     const [dob, setDob] = useState<Date | null>(null);
@@ -21,6 +24,7 @@ export default function OnboardingScreen() {
     const [avatar, setAvatar] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState("");
+    const [gender, setGender] = useState<Gender | null>(null);
 
 
     const { user } = useAuth();
@@ -53,6 +57,11 @@ export default function OnboardingScreen() {
             return;
         }
 
+        if (!gender) {
+            alert('Please select your gender');
+            return;
+        }
+
         try {
             setUploading(true);
             setUploadProgress("Preparing...");
@@ -80,6 +89,7 @@ export default function OnboardingScreen() {
                 dob: dob.toISOString(),
                 bio: bio || undefined,
                 avatarUrl: avatarUrl,
+                gender: gender,
             });
 
             const me = await getMe(accessToken);
@@ -165,6 +175,37 @@ export default function OnboardingScreen() {
                             }}
                         />
                     )}
+
+                    {/* Gender */}
+                    <View style={styles.genderContainer}>
+                        <Text style={styles.genderLabel}>Gender</Text>
+
+                        <View style={styles.genderOptions}>
+                            {['male', 'female', 'other'].map((g) => {
+                                const isSelected = gender === g;
+                                return (
+                                    <TouchableOpacity
+                                        key={g}
+                                        style={[
+                                            styles.genderOption,
+                                            isSelected && styles.genderOptionSelected,
+                                        ]}
+                                        onPress={() => setGender(g as Gender)}
+                                    >
+                                        <Text
+                                            style={[
+                                                styles.genderText,
+                                                isSelected && styles.genderTextSelected,
+                                            ]}
+                                        >
+                                            {g.charAt(0).toUpperCase() + g.slice(1)}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    </View>
+
 
 
                     {/* CTA */}
@@ -330,5 +371,47 @@ const styles = StyleSheet.create({
         color: "#5674A6",
         textAlign: "center",
     },
+
+    genderContainer: {
+        marginBottom: 20,
+    },
+
+    genderLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#5A3F4A',
+        marginBottom: 8,
+    },
+
+    genderOptions: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+
+    genderOption: {
+        flex: 1,
+        paddingVertical: 14,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: '#D6E3F0',
+        backgroundColor: '#FFFFFF',
+        alignItems: 'center',
+        marginHorizontal: 4,
+    },
+
+    genderOptionSelected: {
+        backgroundColor: '#5674A6',
+        borderColor: '#5674A6',
+    },
+
+    genderText: {
+        color: '#2E2E2E',
+        fontWeight: '600',
+    },
+
+    genderTextSelected: {
+        color: '#FFFFFF',
+    },
+
 
 });

@@ -1,4 +1,4 @@
-import { Modal, Image, View, Text, TouchableOpacity, StyleSheet, Dimensions, FlatList, ScrollView } from "react-native";
+import { Modal, Image, View, Text, TouchableOpacity, StyleSheet, Dimensions, FlatList, ScrollView, ActivityIndicator, Alert } from "react-native";
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -8,6 +8,7 @@ import Animated, {
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
+import { joinActivity } from "@/api/participation";
 
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
@@ -17,7 +18,8 @@ const SNAP_BOTTOM = SCREEN_HEIGHT;
 const IMAGE_HEIGHT = 220;
 const AUTO_SLIDE_INTERVAL = 3000;
 
-// ✅ Placeholder image
+
+
 const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=80";
 
 export default function ActivityJoinModal({ activity, onClose }: any) {
@@ -27,6 +29,7 @@ export default function ActivityJoinModal({ activity, onClose }: any) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
     const [viewerIndex, setViewerIndex] = useState(0);
+    const [joining, setJoining] = useState(false);
 
 
     const panGesture = Gesture.Pan()
@@ -140,9 +143,15 @@ export default function ActivityJoinModal({ activity, onClose }: any) {
                                 </Text>
 
                                 <View style={styles.statsRow}>
-                                    <Text style={styles.stat}>👥 {activity.people || 0} online</Text>
-                                    <Text style={styles.stat}>♂ {activity.male || 0}</Text>
-                                    <Text style={styles.stat}>♀ {activity.female || 0}</Text>
+                                    <Text style={styles.stat}>
+                                        👥 {activity.participantCount ?? 0} joined
+                                    </Text>
+                                    <Text style={styles.stat}>
+                                        ♂ {activity.maleJoinedCount ?? 0}
+                                    </Text>
+                                    <Text style={styles.stat}>
+                                        ♀ {activity.femaleJoinedCount ?? 0}
+                                    </Text>
                                 </View>
 
                                 <View style={styles.feeRow}>
@@ -151,16 +160,42 @@ export default function ActivityJoinModal({ activity, onClose }: any) {
                                         {activity.isPaid ? `₹${activity.fee}` : "Free"}
                                     </Text>
                                 </View>
-
                                 <TouchableOpacity
-                                    style={styles.confirmButton}
-                                    onPress={() => {
-                                        onClose();
-                                        router.push(`/chat/${activity.id}`);
+                                    style={[
+                                        styles.confirmButton,
+                                        joining && { opacity: 0.6 },
+                                    ]}
+                                    disabled={joining}
+                                    onPress={async () => {
+                                        try {
+                                            setJoining(true);
+
+                                            await joinActivity(activity.id);
+
+                                            onClose();
+                                            router.push(`/chat/${activity.id}`);
+                                        } catch (err: any) {
+                                            console.error('Join failed:', err);
+
+                                            const message =
+                                                err.response?.data?.message ||
+                                                err.message ||
+                                                'Unable to join activity';
+
+                                            Alert.alert('Join failed', message);
+                                        } finally {
+                                            setJoining(false);
+                                        }
                                     }}
                                 >
-                                    <Text style={styles.confirmText}>CONFIRM JOIN</Text>
+                                    {joining ? (
+                                        <ActivityIndicator color="#FFF" />
+                                    ) : (
+                                        <Text style={styles.confirmText}>CONFIRM JOIN</Text>
+                                    )}
                                 </TouchableOpacity>
+
+
 
                                 <TouchableOpacity onPress={onClose}>
                                     <Text style={styles.cancelText}>Cancel</Text>
