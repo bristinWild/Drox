@@ -1,5 +1,6 @@
 import { TouchableOpacity, View, Text } from "react-native";
 import { StyleSheet } from "react-native";
+import { checkJoiningStatus } from "@/api/participation";
 
 interface ActivityCardProps {
     item: {
@@ -17,10 +18,12 @@ interface ActivityCardProps {
         people?: number;
         createdAt: string;
     };
+    hasJoined: boolean;
     onJoin: () => void;
+    onOpenChat: () => void;
 }
 
-export default function ActivityCard({ item, onJoin }: ActivityCardProps) {
+export default function ActivityCard({ item, onJoin, hasJoined, onOpenChat }: ActivityCardProps) {
     // Calculate time ago
     const getTimeAgo = (dateString: string) => {
         const date = new Date(dateString);
@@ -55,8 +58,13 @@ export default function ActivityCard({ item, onJoin }: ActivityCardProps) {
                 </Text>
             </View>
 
-            <TouchableOpacity style={styles.joinButton} onPress={onJoin}>
-                <Text style={styles.joinText}>JOIN</Text>
+            <TouchableOpacity
+                style={styles.joinButton}
+                onPress={hasJoined ? onOpenChat : onJoin}
+            >
+                <Text style={styles.joinText}>
+                    {hasJoined ? "CHAT" : "JOIN"}
+                </Text>
             </TouchableOpacity>
         </View>
     );

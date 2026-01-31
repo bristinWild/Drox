@@ -14,10 +14,13 @@ import { useEffect, useState } from "react";
 import { getUserHostedActivities, Activity } from "@/api/activity";
 import { getAccessToken } from "@/constants/auth";
 
+
+
 export default function MyActivitiesScreen() {
     const insets = useSafeAreaInsets();
     const [activities, setActivities] = useState<Activity[]>([]);
     const [loading, setLoading] = useState(true);
+
 
     useEffect(() => {
         fetchMyActivities();
@@ -49,6 +52,7 @@ export default function MyActivitiesScreen() {
         }
     };
 
+
     const getTimeAgo = (dateString: string) => {
         const date = new Date(dateString);
         const now = new Date();
@@ -64,6 +68,7 @@ export default function MyActivitiesScreen() {
 
     return (
         <LinearGradient colors={["#B3E0F2", "#FFFFFF"]} style={styles.container}>
+            {/* HEADER */}
             <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <Text style={styles.backArrow}>←</Text>
@@ -72,6 +77,7 @@ export default function MyActivitiesScreen() {
                 <View style={{ width: 40 }} />
             </View>
 
+            {/* CONTENT */}
             {loading ? (
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#5674A6" />
@@ -97,58 +103,100 @@ export default function MyActivitiesScreen() {
                     contentContainerStyle={styles.activityList}
                     showsVerticalScrollIndicator={false}
                 >
-                    {activities.map((activity) => (
-                        <View key={activity.id} style={styles.activityCard}>
-                            <View style={styles.cardHeader}>
-                                <Text style={styles.activityTitle} numberOfLines={2}>
-                                    {activity.title}
+                    {activities.map((activity) => {
+                        const isFull =
+                            typeof activity.maxParticipants === "number" &&
+                            (activity.participantCount ?? 0) >= activity.maxParticipants;
+
+                        return (
+                            <View key={activity.id} style={styles.activityCard}>
+                                {/* HEADER */}
+                                <View style={styles.cardHeader}>
+                                    <Text style={styles.activityTitle} numberOfLines={2}>
+                                        {activity.title}
+                                    </Text>
+                                    <TouchableOpacity style={styles.menuButton}>
+                                        <Text style={styles.menuIcon}>⋮</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                {/* DESCRIPTION */}
+                                <Text style={styles.activityDescription} numberOfLines={2}>
+                                    {activity.description || "No description"}
                                 </Text>
-                                <TouchableOpacity style={styles.menuButton}>
-                                    <Text style={styles.menuIcon}>⋮</Text>
+
+                                {/* LOCATION */}
+                                <View style={styles.locationRow}>
+                                    <Text style={styles.locationIcon}>📍</Text>
+                                    <Text style={styles.locationText} numberOfLines={1}>
+                                        {activity.location.name}
+                                    </Text>
+                                </View>
+
+                                {/* FOOTER */}
+                                <View style={styles.cardFooter}>
+                                    <View style={styles.statsContainer}>
+                                        <Text style={styles.statText}>
+                                            👥 {activity.participantCount ?? 0}
+                                            {activity.maxParticipants
+                                                ? ` / ${activity.maxParticipants}`
+                                                : ""}{" "}
+                                            joined
+                                        </Text>
+
+                                        <Text style={styles.statText}>
+                                            ♂ {activity.maleJoinedCount ?? 0}
+                                        </Text>
+
+                                        <Text style={styles.statText}>
+                                            ♀ {activity.femaleJoinedCount ?? 0}
+                                        </Text>
+
+                                        <Text style={styles.statText}>•</Text>
+
+                                        <Text style={styles.timeText}>
+                                            {getTimeAgo(activity.createdAt)}
+                                        </Text>
+                                    </View>
+
+                                    {/* FEE / FULL */}
+                                    <View
+                                        style={[
+                                            styles.feeContainer,
+                                            isFull && { backgroundColor: "#FEE2E2" },
+                                        ]}
+                                    >
+                                        <Text
+                                            style={[
+                                                styles.feeText,
+                                                isFull && { color: "#B91C1C" },
+                                            ]}
+                                        >
+                                            {isFull
+                                                ? "FULL"
+                                                : activity.isPaid
+                                                    ? `₹${activity.fee}`
+                                                    : "FREE"}
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                {/* CTA */}
+                                <TouchableOpacity
+                                    style={styles.viewButton}
+                                    onPress={() => router.push(`/chat/${activity.id}`)}
+                                >
+                                    <Text style={styles.viewButtonText}>
+                                        {isFull ? "VIEW CHAT" : "VIEW DETAILS"}
+                                    </Text>
                                 </TouchableOpacity>
                             </View>
-
-                            <Text style={styles.activityDescription} numberOfLines={2}>
-                                {activity.description || "No description"}
-                            </Text>
-
-                            <View style={styles.locationRow}>
-                                <Text style={styles.locationIcon}>📍</Text>
-                                <Text style={styles.locationText} numberOfLines={1}>
-                                    {activity.location.name}
-                                </Text>
-                            </View>
-
-                            <View style={styles.cardFooter}>
-                                <View style={styles.statsContainer}>
-                                    <Text style={styles.statText}>👥 0 joined</Text>
-                                    <Text style={styles.statText}>•</Text>
-                                    <Text style={styles.timeText}>
-                                        {getTimeAgo(activity.createdAt)}
-                                    </Text>
-                                </View>
-
-                                <View style={styles.feeContainer}>
-                                    <Text style={styles.feeText}>
-                                        {activity.isPaid ? `₹${activity.fee}` : "FREE"}
-                                    </Text>
-                                </View>
-                            </View>
-
-                            <TouchableOpacity
-                                style={styles.viewButton}
-                                onPress={() => {
-                                    // Navigate to activity detail or chat
-                                    router.push(`/chat/${activity.id}`);
-                                }}
-                            >
-                                <Text style={styles.viewButtonText}>VIEW DETAILS</Text>
-                            </TouchableOpacity>
-                        </View>
-                    ))}
+                        );
+                    })}
                 </ScrollView>
             )}
 
+            {/* FAB */}
             {!loading && activities.length > 0 && (
                 <TouchableOpacity
                     style={styles.fab}
@@ -159,6 +207,7 @@ export default function MyActivitiesScreen() {
             )}
         </LinearGradient>
     );
+
 }
 
 const styles = StyleSheet.create({

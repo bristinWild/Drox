@@ -28,6 +28,8 @@ import { getActivities, Activity } from "@/api/activity";
 import { getAccessToken } from "@/constants/auth";
 import { Marker } from "react-native-maps";
 import { useUserApi } from "@/api/user";
+import { checkJoiningStatus } from "@/api/participation";
+
 
 
 const SHEET_MAX_HEIGHT = 520;
@@ -49,6 +51,8 @@ export default function ExploreScreen() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [showProfileHint, setShowProfileHint] = useState(true);
+  const [joinedMap, setJoinedMap] = useState<Record<string, boolean>>({});
+
 
 
   useEffect(() => {
@@ -122,18 +126,30 @@ export default function ExploreScreen() {
 
       const data = await getActivities(token);
       setActivities(data);
+
+
+      const statuses = await Promise.all(
+        data.map(a =>
+          checkJoiningStatus(a.id)
+            .then(res => ({ id: a.id, hasJoined: res.hasJoined }))
+            .catch(() => ({ id: a.id, hasJoined: false }))
+        )
+      );
+
+      const map: Record<string, boolean> = {};
+      statuses.forEach(s => {
+        map[s.id] = s.hasJoined;
+      });
+
+      setJoinedMap(map);
     } catch (error: any) {
       console.error("Failed to fetch activities:", error);
-      if (error.response?.status === 401) {
-        Alert.alert("Error", "Session expired. Please login again");
-        router.replace("/auth");
-      } else {
-        Alert.alert("Error", "Failed to load activities");
-      }
+      Alert.alert("Error", "Failed to load activities");
     } finally {
       setLoadingActivities(false);
     }
   };
+
 
   const calculateDistance = (activityLat: number, activityLng: number) => {
     if (!location) return "N/A";
@@ -181,6 +197,11 @@ export default function ExploreScreen() {
   }));
 
   const handleJoined = (activityId: string) => {
+    setJoinedMap(prev => ({
+      ...prev,
+      [activityId]: true,
+    }));
+
     setActivities(prev =>
       prev.map(a =>
         a.id === activityId
@@ -336,11 +357,13 @@ export default function ExploreScreen() {
                             item.location.lat,
                             item.location.lng
                           ),
-                          people: item.participantCount ?? 0
-                          ,
+                          people: item.participantCount ?? 0,
                         }}
+                        hasJoined={joinedMap[item.id] === true}
                         onJoin={() => setSelectedActivity(item)}
+                        onOpenChat={() => router.push(`/chat/${item.id}`)}
                       />
+
                     ))}
                   </ScrollView>
                 )}

@@ -19,3 +19,35 @@ export async function joinActivity(activityId: string) {
 
     return res.data;
 }
+
+export async function checkJoiningStatus(activityId: string) {
+    const token = await getAccessToken();
+    if (!token) throw new Error("Not authenticated");
+
+    const res = await axios.get(
+        `${BASE_URL}/participation/${activityId}/check-status`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    return res.data as { hasJoined: boolean };
+}
+
+export async function getMyBookings() {
+    const token = await getAccessToken();
+    if (!token) throw new Error("Not authenticated");
+
+    const res = await axios.get(
+        `${BASE_URL}/participation/check-all-bookings`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    return res.data;
+}

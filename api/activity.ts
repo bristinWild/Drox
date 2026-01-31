@@ -1,5 +1,6 @@
 import axios from "axios";
 import { GenderPolicy } from "@/api/enums/GenderPolicyEnum";
+import { getAccessToken } from "@/constants/auth";
 
 
 const BASE_URL = "http://192.168.1.12:3000";
@@ -81,3 +82,19 @@ export const getUserHostedActivities = async (accessToken: string): Promise<Acti
     });
     return res.data;
 };
+
+export async function getActivityById(activityId: string) {
+    const token = await getAccessToken();
+    if (!token) throw new Error("Not authenticated");
+
+    const res = await axios.get(
+        `${BASE_URL}/activity/${activityId}`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    return res.data;
+}

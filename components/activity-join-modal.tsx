@@ -8,7 +8,7 @@ import Animated, {
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { joinActivity } from "@/api/participation";
+import { joinActivity, checkJoiningStatus } from "@/api/participation";
 
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
@@ -30,6 +30,8 @@ export default function ActivityJoinModal({ activity, onClose }: any) {
     const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
     const [viewerIndex, setViewerIndex] = useState(0);
     const [joining, setJoining] = useState(false);
+    const [hasJoined, setHasJoined] = useState(false);
+    const [checkingStatus, setCheckingStatus] = useState(true);
 
 
     const panGesture = Gesture.Pan()
@@ -76,6 +78,23 @@ export default function ActivityJoinModal({ activity, onClose }: any) {
         return () => clearInterval(timer);
     }, [currentIndex, images.length]);
 
+
+    useEffect(() => {
+        let mounted = true;
+
+        (async () => {
+            try {
+                const res = await checkJoiningStatus(activity.id);
+                if (mounted) setHasJoined(res.hasJoined);
+            } finally {
+                if (mounted) setCheckingStatus(false);
+            }
+        })();
+
+        return () => {
+            mounted = false;
+        };
+    }, [activity.id]);
 
 
 
@@ -163,37 +182,44 @@ export default function ActivityJoinModal({ activity, onClose }: any) {
                                 <TouchableOpacity
                                     style={[
                                         styles.confirmButton,
-                                        joining && { opacity: 0.6 },
+                                        (joining || checkingStatus) && { opacity: 0.6 },
                                     ]}
-                                    disabled={joining}
+                                    disabled={joining || checkingStatus}
                                     onPress={async () => {
+                                        // ✅ If already joined → just open chat
+                                        if (hasJoined) {
+                                            onClose();
+                                            router.push(`/chat/${activity.id}`);
+                                            return;
+                                        }
+
+                                        // ✅ Otherwise → join activity
                                         try {
                                             setJoining(true);
-
                                             await joinActivity(activity.id);
-
                                             onClose();
                                             router.push(`/chat/${activity.id}`);
                                         } catch (err: any) {
-                                            console.error('Join failed:', err);
-
                                             const message =
                                                 err.response?.data?.message ||
                                                 err.message ||
-                                                'Unable to join activity';
+                                                "Unable to join activity";
 
-                                            Alert.alert('Join failed', message);
+                                            Alert.alert("Join failed", message);
                                         } finally {
                                             setJoining(false);
                                         }
                                     }}
                                 >
-                                    {joining ? (
+                                    {joining || checkingStatus ? (
                                         <ActivityIndicator color="#FFF" />
                                     ) : (
-                                        <Text style={styles.confirmText}>CONFIRM JOIN</Text>
+                                        <Text style={styles.confirmText}>
+                                            {hasJoined ? "OPEN CHAT" : "CONFIRM JOIN"}
+                                        </Text>
                                     )}
                                 </TouchableOpacity>
+
 
 
 

@@ -348,7 +348,10 @@ export default function ProfileScreen() {
                         label="My Hostings"
                         onPress={() => router.push("/my-activities")}
                     />
-                    <ProfileItem label="My Bookings" />
+                    <ProfileItem
+                        label="My Bookings"
+                        onPress={() => router.push("/my-bookings")}
+                    />
                     <ProfileItem label="Recent Activities" />
                     <ProfileItem label="Settings" />
                 </View>
